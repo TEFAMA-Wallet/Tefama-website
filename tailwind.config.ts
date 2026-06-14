@@ -8,13 +8,20 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "#0a0a0a",
-        primary: "#FF8C00",
-        accent: "#FFD700",
+      animation: {
+        "spin-slow": "spin 10s linear infinite",
+        "spin-rev": "spin-rev 14s linear infinite",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
       },
-      fontFamily: {
-        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+      keyframes: {
+        "spin-rev": {
+          from: { transform: "rotate(360deg)" },
+          to: { transform: "rotate(0deg)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
       },
     },
   },
