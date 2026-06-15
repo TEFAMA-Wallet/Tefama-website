@@ -4,7 +4,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Bot, ChartLine, Activity, Wallet, Settings, CircleHelp, ExternalLink, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { AGENTS, WALLET } from "@/lib/data";
+import { AGENTS } from "@/lib/data";
+import { useZkLogin } from "@/context/ZkLoginContext";
 
 const NAV_MAIN = [
   { key: "dashboard", path: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -22,9 +23,11 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const { address, shortAddress, logout } = useZkLogin();
 
   const copy = () => {
-    navigator.clipboard.writeText(WALLET.fullAddress).catch(() => {});
+    if (!address) return;
+    navigator.clipboard.writeText(address).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1100);
   };
@@ -55,12 +58,12 @@ export default function Sidebar() {
       </nav>
       <div className="sb-wallet">
         <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={copy}>
-          <span className="addr mono">{WALLET.address}</span>
+          <span className="addr mono">{shortAddress ?? "—"}</span>
           {copied ? <Check size={13} style={{ color: "var(--orange-400)" }} /> : <Copy size={13} style={{ opacity: 0.4 }} />}
         </div>
-        <div className="net"><span className="d" /> {WALLET.network}</div>
+        <div className="net"><span className="d" /> Sui Testnet · zkLogin</div>
         <button
-          onClick={() => router.push("/connect")}
+          onClick={() => { logout(); router.push("/connect"); }}
           style={{ marginTop: 12, width: "100%", height: 34, borderRadius: 9, background: "var(--status-revoked-tint)", color: "var(--ember-500)", border: "1px solid transparent", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
         >
           <LogOut size={14} /> Disconnect
