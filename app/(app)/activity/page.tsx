@@ -27,7 +27,7 @@ export default function ActivityPage() {
           {agentNames.map((n) => (
             <button key={n} onClick={() => setFilter(n)} style={{
               padding: "6px 14px", borderRadius: 20,
-              background: filter === n ? "var(--brand-tint)" : "var(--white-a06)",
+              background: filter === n ? "var(--brand-tint)" : "var(--ink-a06)",
               border: `1px solid ${filter === n ? "var(--orange-a20)" : "var(--border-subtle)"}`,
               color: filter === n ? "var(--orange-400)" : "var(--text-secondary)",
               fontSize: 13, fontWeight: 500, cursor: "pointer",

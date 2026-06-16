@@ -82,7 +82,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {AGENTS.filter((a) => a.status === "active").slice(0, 4).map((a) => (
-                <Link key={a.id} href={`/agents/${a.id}`} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 12px", borderRadius: 10, background: "var(--white-a04)", transition: "background 0.15s" }}>
+                <Link key={a.id} href={`/agents/${a.id}`} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 12px", borderRadius: 10, background: "var(--ink-a04)", transition: "background 0.15s" }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--brand-tint)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange-400)", flexShrink: 0 }}>
                     <Bot size={18} />
                   </div>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
             <div>
               {recent.map((tx, i) => (
                 <div key={tx.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < recent.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-                  <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--white-a04)", display: "flex", alignItems: "center", justifyContent: "center", color: tx.type === "buy" ? "var(--orange-400)" : "var(--text-secondary)", flexShrink: 0 }}>
+                  <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ink-a04)", display: "flex", alignItems: "center", justifyContent: "center", color: tx.type === "buy" ? "var(--orange-400)" : "var(--text-secondary)", flexShrink: 0 }}>
                     {tx.type === "buy" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>

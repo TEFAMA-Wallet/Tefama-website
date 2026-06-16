@@ -6,6 +6,7 @@ import { LayoutDashboard, Bot, ChartLine, Activity, Wallet, Settings, CircleHelp
 import { useState } from "react";
 import { AGENTS } from "@/lib/data";
 import { useZkLogin } from "@/context/ZkLoginContext";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 const NAV_MAIN = [
   { key: "dashboard", path: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -42,10 +43,13 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <Link href="/" className="sb-logo">
-        <Image src="/logo-mark.png" alt="TEFAMA" width={24} height={24} style={{ objectFit: "contain" }} />
-        <span className="logo-word">TEFAMA</span>
-      </Link>
+      <div className="sb-logo" style={{ justifyContent: "space-between" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Image src="/logo-mark.png" alt="TEFAMA" width={24} height={24} style={{ objectFit: "contain" }} />
+          <span className="logo-word">TEFAMA</span>
+        </Link>
+        <ThemeToggle />
+      </div>
       <nav className="sb-nav">
         {NAV_MAIN.map(item)}
         <div className="sb-section">Account</div>
