@@ -7,10 +7,6 @@ import Card from "@/components/ui/Card";
 import { buildGoogleLoginUrl } from "@/lib/zklogin";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
-const REDIRECT_URI =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/auth/callback`
-    : "";
 
 function GoogleGlyph() {
   return (
@@ -37,10 +33,7 @@ export default function ConnectPage() {
     setLoading(true);
     setError("");
     try {
-      const redirectUri =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback`
-          : REDIRECT_URI;
+      const redirectUri = `${window.location.origin}/auth/callback`;
       const url = await buildGoogleLoginUrl(GOOGLE_CLIENT_ID, redirectUri);
       window.location.href = url;
     } catch (err) {
@@ -87,7 +80,7 @@ export default function ConnectPage() {
             <Info size={18} className="i" />
             <span>
               TEFAMA uses zkLogin for secure, privacy-preserving sign-in. Your
-              funds stay in your wallet — we never access your private keys.
+              funds stay in your wallet we never access your private keys.
             </span>
           </div>
 

@@ -9,6 +9,7 @@ import {
 } from "@mysten/sui/zklogin";
 import {
   saveEphemeral,
+  clearEphemeral,
   loadEphemeral,
   type ZkProofData,
 } from "./zklogin-store";
@@ -17,10 +18,6 @@ type SuiNetwork = "testnet" | "mainnet" | "devnet" | "localnet";
 
 const NETWORK =
   (process.env.NEXT_PUBLIC_SUI_NETWORK as SuiNetwork | undefined) ?? "testnet";
-
-// Calls go to our own Next.js API routes (server-side proxies) to avoid CORS
-const SALT_URL = "/api/zklogin/salt";
-const PROOF_URL = "/api/zklogin/proof";
 
 export const suiClient = new SuiJsonRpcClient({
   url: getJsonRpcFullnodeUrl(NETWORK),
@@ -49,13 +46,14 @@ export async function buildGoogleLoginUrl(
     response_type: "id_token",
     scope: "openid email profile",
     nonce,
+    prompt: "select_account",
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
 async function getSalt(jwt: string): Promise<string> {
-  const res = await fetch(SALT_URL, {
+  const res = await fetch("/api/zklogin/salt", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token: jwt }),
@@ -75,7 +73,7 @@ async function fetchZkProof(
   randomness: string,
   salt: string
 ): Promise<ZkProofData> {
-  const res = await fetch(PROOF_URL, {
+  const res = await fetch("/api/zklogin/proof", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -103,15 +101,12 @@ export interface LoginResult {
   maxEpoch: number;
   secretKey: string;
   zkProof: ZkProofData;
-  jwt: string;
 }
 
 export async function completeLogin(jwt: string): Promise<LoginResult> {
   const ephemeral = loadEphemeral();
   if (!ephemeral) {
-    throw new Error(
-      "Session expired — no ephemeral data found. Please start login again."
-    );
+    throw new Error("Session expired — please start login again.");
   }
 
   const keypair = Ed25519Keypair.fromSecretKey(ephemeral.secretKey);
@@ -128,10 +123,10 @@ export async function completeLogin(jwt: string): Promise<LoginResult> {
     salt
   );
 
-  // jwtToAddress in v2 requires explicit legacyAddress flag; false = new format
   const address = jwtToAddress(jwt, salt, false);
-
   const claims = decodeJwt(jwt) as Record<string, unknown>;
+
+  clearEphemeral();
 
   return {
     address,
@@ -142,7 +137,6 @@ export async function completeLogin(jwt: string): Promise<LoginResult> {
     maxEpoch: ephemeral.maxEpoch,
     secretKey: ephemeral.secretKey,
     zkProof,
-    jwt,
   };
 }
 

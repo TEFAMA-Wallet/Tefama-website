@@ -27,7 +27,6 @@ export interface ZkLoginSession {
   maxEpoch: number;
   secretKey: string;
   zkProof: ZkProofData;
-  jwt: string;
 }
 
 const EPHEMERAL_KEY = "zkl_ephemeral";
@@ -48,16 +47,16 @@ export function clearEphemeral(): void {
 }
 
 export function saveSession(session: ZkLoginSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function loadSession(): ZkLoginSession | null {
   if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(SESSION_KEY);
+  const raw = sessionStorage.getItem(SESSION_KEY);
   return raw ? (JSON.parse(raw) as ZkLoginSession) : null;
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(EPHEMERAL_KEY);
 }

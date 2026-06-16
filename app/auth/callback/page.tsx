@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ShieldCheck, AlertCircle } from "lucide-react";
@@ -15,16 +15,18 @@ export default function AuthCallbackPage() {
   const { setSession } = useZkLogin();
   const [status, setStatus] = useState<Status>("processing");
   const [errorMsg, setErrorMsg] = useState("");
+  const ran = useRef(false);
 
   useEffect(() => {
+    if (ran.current) return;
+    ran.current = true;
+
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.slice(1));
     const jwt = params.get("id_token");
 
     if (!jwt) {
-      setErrorMsg(
-        "No identity token found in the redirect. Please try signing in again."
-      );
+      setErrorMsg("No identity token in redirect. Please sign in again.");
       setStatus("error");
       return;
     }
@@ -41,16 +43,14 @@ export default function AuthCallbackPage() {
           maxEpoch: result.maxEpoch,
           secretKey: result.secretKey,
           zkProof: result.zkProof,
-          jwt: result.jwt,
         });
         router.replace("/biometric");
       })
       .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        setErrorMsg(msg);
+        setErrorMsg(err instanceof Error ? err.message : "Unknown error");
         setStatus("error");
       });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router, setSession]);
 
   return (
     <div className="auth-wrap">
@@ -70,7 +70,10 @@ export default function AuthCallbackPage() {
         <Card variant="raised" style={{ padding: 40, textAlign: "center" }}>
           {status === "processing" && (
             <>
-              <div className="auth-orb" style={{ animation: "glow-pulse 0.8s ease-in-out infinite" }}>
+              <div
+                className="auth-orb"
+                style={{ animation: "glow-pulse 0.8s ease-in-out infinite" }}
+              >
                 <ShieldCheck size={48} />
               </div>
               <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
@@ -118,10 +121,7 @@ export default function AuthCallbackPage() {
 
           {status === "error" && (
             <>
-              <div
-                className="auth-orb"
-                style={{ color: "var(--ember-500)" }}
-              >
+              <div className="auth-orb" style={{ color: "var(--ember-500)" }}>
                 <AlertCircle size={48} />
               </div>
               <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
