@@ -1,0 +1,7 @@
+[package]
+name = "tefama"
+edition = "2024"
+license = "MIT"
+
+[addresses]
+tefama = "0x0"
