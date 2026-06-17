@@ -69,13 +69,15 @@ export default function FAQPage() {
         </section>
 
         <section className="section">
-          <div className="container" style={{ maxWidth: 760 }}>
-            {FAQ_ALL.map((cat) => (
-              <div key={cat.category} style={{ marginBottom: 48 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 20 }}>{cat.category}</h3>
-                <FaqSection items={cat.items} />
-              </div>
-            ))}
+          <div className="container">
+            <div className="faq-page-grid">
+              {FAQ_ALL.map((cat) => (
+                <div key={cat.category} className="faq-page-col">
+                  <h3 className="faq-cat-label">{cat.category}</h3>
+                  <FaqSection items={cat.items} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -1,6 +1,8 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
+import { useTheme } from "@/context/ThemeContext";
 
 function XGlyph({ size = 16 }: { size?: number }) {
   return (
@@ -27,6 +29,8 @@ function DiscordGlyph({ size = 17 }: { size?: number }) {
 }
 
 export function FooterHero() {
+  const { theme } = useTheme();
+  const logoSrc = theme === "light" ? "/logo-mark-light.png" : "/logo-mark.png";
   return (
     <section className="footer-hero">
       <div className="fh-bg">
@@ -61,7 +65,7 @@ export function FooterHero() {
           </svg>
           <Image
             className="emblem-mark"
-            src="/logo-mark.png"
+            src={logoSrc}
             alt="TEFAMA"
             width={74}
             height={74}
@@ -89,24 +93,11 @@ export default function Footer() {
           <Logo />
           <p>Autonomous trading on Sui.</p>
         </div>
-        <nav className="footer-nav">
-          <Link href="/features">Features</Link>
-          <Link href="/how-it-works">How it works</Link>
-          <Link href="/faq">FAQ</Link>
-          <a href="#">Docs</a>
-        </nav>
         <div className="footer-social">
           <a aria-label="X (Twitter)"><XGlyph /></a>
           <a aria-label="GitHub"><GitHubGlyph /></a>
           <a aria-label="Discord"><DiscordGlyph /></a>
         </div>
-      </div>
-      <div className="container footer-base">
-        <span>© 2026 TEFAMA</span>
-        <span className="footer-legal">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-        </span>
       </div>
     </footer>
   );
