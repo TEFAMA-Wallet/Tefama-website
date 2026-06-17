@@ -2,36 +2,60 @@ import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 const SALT_SECRET = process.env.ZKLOGIN_SALT_SECRET;
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+const VALID_ISSUERS = new Set([
+  "accounts.google.com",
+  "https://accounts.google.com",
+]);
 
 export async function POST(req: NextRequest) {
-  const { token } = (await req.json()) as { token: string };
+  const body = (await req.json()) as { token?: string };
 
-  if (!token) {
+  if (!body.token || typeof body.token !== "string") {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
   }
 
   if (!SALT_SECRET) {
     return NextResponse.json(
-      { error: "ZKLOGIN_SALT_SECRET is not set" },
+      { error: "ZKLOGIN_SALT_SECRET is not configured" },
       { status: 500 }
     );
   }
 
-  // Extract the sub claim (user's permanent Google ID) from the JWT payload.
-  // Full JWT verification is not needed here — the ZK proof verifies the JWT.
-  const [, payloadB64] = token.split(".");
-  const { sub } = JSON.parse(
-    Buffer.from(payloadB64, "base64url").toString("utf8")
-  ) as { sub: string };
-
-  if (!sub) {
-    return NextResponse.json({ error: "No sub in JWT" }, { status: 400 });
+  const parts = body.token.split(".");
+  if (parts.length !== 3) {
+    return NextResponse.json({ error: "Malformed JWT" }, { status: 400 });
   }
 
-  // Derive a deterministic 128-bit salt from (secret, sub).
-  // Same Google account → same salt → same Sui address, every time.
-  const hmac = createHmac("sha256", SALT_SECRET).update(sub).digest("hex");
-  const salt = (BigInt("0x" + hmac) % 2n ** 128n).toString();
+  let payload: { sub?: string; iss?: string; aud?: string | string[]; exp?: number };
+  try {
+    payload = JSON.parse(
+      Buffer.from(parts[1], "base64url").toString("utf8")
+    ) as { sub?: string; iss?: string; aud?: string | string[]; exp?: number };
+  } catch {
+    return NextResponse.json({ error: "Could not decode JWT payload" }, { status: 400 });
+  }
+
+  if (!payload.iss || !VALID_ISSUERS.has(payload.iss)) {
+    return NextResponse.json({ error: "Invalid JWT issuer" }, { status: 400 });
+  }
+
+  const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud ?? ""];
+  if (CLIENT_ID && !aud.includes(CLIENT_ID)) {
+    return NextResponse.json({ error: "JWT audience mismatch" }, { status: 400 });
+  }
+
+  if (!payload.exp || Date.now() / 1000 > payload.exp) {
+    return NextResponse.json({ error: "JWT has expired" }, { status: 400 });
+  }
+
+  if (!payload.sub) {
+    return NextResponse.json({ error: "JWT missing sub claim" }, { status: 400 });
+  }
+
+  const hmac = createHmac("sha256", SALT_SECRET).update(payload.sub).digest("hex");
+  const salt = (BigInt("0x" + hmac) % BigInt(2) ** BigInt(128)).toString();
 
   return NextResponse.json({ salt });
 }
