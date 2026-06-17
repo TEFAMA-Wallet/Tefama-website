@@ -2,32 +2,61 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import {
-  ArrowRight, Check, ChevronDown,
-  PenOff, ShieldCheck, Eye,
-  Fingerprint, SlidersHorizontal, Rocket, Gauge,
-  Boxes, FileLock2,
-} from "lucide-react";
-import Card from "@/components/ui/Card";
-import { FAQ_HOME } from "@/lib/data";
 
-/* ---- Hero background rings ---- */
-function HeroRings() {
+/* one ECG cycle = 240px wide, baseline at y=30, total height 60 */
+const ECG_CYCLE =
+  "M0,30 L40,30 L48,33 L52,27 L56,33 L60,30 " +   // P wave
+  "L80,30 L86,38 L92,2 L96,46 L100,30 " +           // QRS complex
+  "L112,30 C118,30 122,20 126,20 C130,20 134,30 140,30 " + // T wave
+  "L240,30";                                          // flat to next cycle
+
+function EcgLine() {
+  /* repeat the cycle 8× to fill a wide strip, then we shift by one cycle width */
+  const path = Array.from({ length: 8 }, (_, i) =>
+    ECG_CYCLE.replace(/(\d+(?:\.\d+)?)/g, (n) =>
+      String(parseFloat(n) + (n === "30" || n === "33" || n === "27" || n === "38" || n === "2" || n === "46" || n === "20" ? 0 : i * 240))
+    )
+  ).join(" ");
+
+  // build path by offsetting X coords for each repeat
+  const cycles = Array.from({ length: 8 }, (_, i) => {
+    const dx = i * 240;
+    return ECG_CYCLE
+      .split(" ")
+      .map(cmd => {
+        if (/^[MLCm]$/.test(cmd)) return cmd;
+        // parse coordinate pairs and shift X
+        return cmd.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g, (_, x, y) =>
+          `${parseFloat(x) + dx},${y}`
+        );
+      })
+      .join(" ");
+  }).join(" ");
+
   return (
-    <svg className="hero-rings" viewBox="0 0 660 660" fill="none" aria-hidden="true">
-      <g className="spin">
-        <circle cx="330" cy="330" r="328" stroke="var(--border-subtle)" />
-        <circle cx="330" cy="330" r="250" stroke="rgba(var(--brand-rgb),0.16)" strokeDasharray="2 10" />
-        <circle cx="330" cy="2" r="6" fill="var(--gold-500)" />
+    <svg className="hero-ecg" viewBox="0 0 1920 60" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="ecgFade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stopColor="rgba(34,211,238,0)"   />
+          <stop offset="15%"  stopColor="rgba(34,211,238,0.6)" />
+          <stop offset="85%"  stopColor="rgba(34,211,238,0.6)" />
+          <stop offset="100%" stopColor="rgba(34,211,238,0)"   />
+        </linearGradient>
+      </defs>
+      <g className="ecg-scroll">
+        <path d={cycles} fill="none" stroke="url(#ecgFade)" strokeWidth="1.5" />
       </g>
-      <g className="spin-rev">
-        <circle cx="330" cy="330" r="185" stroke="var(--border-default)" />
-        <circle cx="330" cy="145" r="4" fill="var(--orange-500)" />
-      </g>
-      <circle cx="330" cy="330" r="110" stroke="rgba(var(--brand-rgb),0.10)" />
     </svg>
   );
 }
+
+import {
+  ArrowRight, ChevronDown,
+  Fingerprint, SlidersHorizontal, Rocket, Gauge,
+  Boxes, FileLock2,
+} from "lucide-react";
+import { FAQ_HOME } from "@/lib/data";
+
 
 /* ---- FAQ accordion ---- */
 function FaqAccordion({ items }: { items: typeof FAQ_HOME }) {
@@ -49,12 +78,6 @@ function FaqAccordion({ items }: { items: typeof FAQ_HOME }) {
   );
 }
 
-const VALUE_PROPS = [
-  { Icon: PenOff,      h: "No pop-ups",      b: "Your agent trades on its own. You never sign a thing." },
-  { Icon: ShieldCheck, h: "Can't overspend",  b: "It never goes past the budget you set. Locked on-chain." },
-  { Icon: Eye,         h: "Always yours",     b: "See every move. Pull the plug in one tap, anytime." },
-];
-
 const HOME_STEPS = [
   { Icon: Fingerprint,       h: "Sign in",           b: "Use Google. That's it." },
   { Icon: SlidersHorizontal, h: "Set a budget",       b: "Pick an amount and a strategy." },
@@ -75,11 +98,10 @@ export default function HomePage() {
       <section className="hero-v2">
         {/* layered background */}
         <div className="hero-bg">
+          <div className="hero-grid" />
           <div className="glow-c" />
-          {/* soft side glows */}
           <div className="hero-side-l" />
           <div className="hero-side-r" />
-          {/* scattered particles on left + right */}
           <div className="hero-particles" aria-hidden="true">
             <span className="p p1" /><span className="p p2" /><span className="p p3" />
             <span className="p p4" /><span className="p p5" /><span className="p p6" />
@@ -88,65 +110,40 @@ export default function HomePage() {
           </div>
           <Image
             className="hero-watermark"
-            src="/logo-mark.png"
+            src="/logo-mark-watermark.png"
             alt=""
-            width={640}
-            height={640}
+            width={480}
+            height={480}
             aria-hidden="true"
             priority
           />
-          <HeroRings />
+          <EcgLine />
           <div className="vignette" />
         </div>
 
         {/* centered content */}
         <div className="hero-inner">
-          <span className="hero-tag fu fu-1">
-            <span className="pdot" /> Autonomous agent wallet · Sui
-          </span>
-          <h1 className="hero-title fu fu-2">
+          <h1 className="hero-title fu fu-1">
             Set a budget.<br />
             <span className="l2">Let it trade.</span>
           </h1>
-          <p className="hero-sub fu fu-3">
-            AI agents trade for you, around the clock — inside the limits you set.
+          <p className="hero-sub fu fu-2">
+            AI agents trade on-chain for you — inside the limits you set.
             Stop anytime, with a single tap.
           </p>
-          <div className="hero-actions fu fu-4">
-            <Link href="/how-it-works">
+          <div className="hero-actions fu fu-3">
+            <Link href="/connect">
               <button className="glass-pill primary">
-                See how it works <ArrowRight size={18} />
+                Get started <ArrowRight size={18} />
               </button>
             </Link>
-            <Link href="/features">
-              <button className="glass-pill">Explore features</button>
+            <Link href="/how-it-works">
+              <button className="glass-pill">How it works</button>
             </Link>
-          </div>
-          <div className="hero-reassure fu fu-5">
-            <Check size={14} style={{ color: "var(--orange-400)" }} />
-            Free forever
-            <span className="d" />
-            No card
-            <span className="d" />
-            Live in 60 seconds
           </div>
         </div>
       </section>
 
-      {/* ======== VALUE PROPS ======== */}
-      <section className="section-sm" id="sec-features">
-        <div className="container">
-          <div className="grid-3">
-            {VALUE_PROPS.map((v) => (
-              <Card key={v.h} className="feature-card">
-                <div className="feature-ico"><v.Icon size={24} /></div>
-                <h3>{v.h}</h3>
-                <p>{v.b}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ======== HOW IT WORKS ======== */}
       <section className="section" id="sec-how">

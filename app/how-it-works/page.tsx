@@ -36,19 +36,15 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        <section style={{ paddingBottom: 70 }}>
-          <div className="container" style={{ maxWidth: 900 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <section className="section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="hiw-steps">
               {STEPS.map((s, i) => (
-                <Card key={i} style={{ padding: "28px 32px", display: "flex", gap: 24, alignItems: "flex-start" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, borderRadius: 12, background: "var(--brand-tint)", color: "var(--orange-400)", flexShrink: 0 }}>
-                    <s.Icon size={22} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Step {i + 1}</div>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{s.h}</h3>
-                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.7, fontSize: 14 }}>{s.b}</p>
-                  </div>
+                <Card key={i} className="hiw-step-card">
+                  <div className="hiw-step-num">0{i + 1}</div>
+                  <div className="hiw-step-ico"><s.Icon size={22} /></div>
+                  <h3 className="hiw-step-title">{s.h}</h3>
+                  <p className="hiw-step-body">{s.b}</p>
                 </Card>
               ))}
             </div>
@@ -57,7 +53,7 @@ export default function HowItWorksPage() {
 
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="container">
-            <div className="section-head">
+            <div className="section-head" style={{ marginBottom: 32 }}>
               <div className="kicker">Under the hood</div>
               <h2>The technical details</h2>
               <p>How TEFAMA keeps your funds safe while staying fully autonomous.</p>
