@@ -43,7 +43,7 @@ export default function WalletPage() {
               <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{WALLET.type}</div>
               <button onClick={copy} style={{
                 display: "flex", alignItems: "center", gap: 6,
-                background: "var(--white-a06)", border: "1px solid var(--border-default)",
+                background: "var(--ink-a06)", border: "1px solid var(--border-default)",
                 borderRadius: 8, padding: "6px 12px", cursor: "pointer",
                 color: "var(--text-secondary)", fontSize: 12, fontFamily: "var(--font-mono)",
               }}>
@@ -79,7 +79,7 @@ export default function WalletPage() {
                     <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{usd(t.usd, 0)}</td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ flex: 1, height: 6, background: "var(--white-a08)", borderRadius: 3, overflow: "hidden", maxWidth: 100 }}>
+                        <div style={{ flex: 1, height: 6, background: "var(--ink-a08)", borderRadius: 3, overflow: "hidden", maxWidth: 100 }}>
                           <div style={{ height: "100%", width: `${t.alloc}%`, background: "var(--orange-500)", borderRadius: 3 }} />
                         </div>
                         <span style={{ fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{t.alloc}%</span>

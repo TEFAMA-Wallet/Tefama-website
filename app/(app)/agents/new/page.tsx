@@ -87,7 +87,7 @@ export default function CreateAgentPage() {
                   {STRATEGIES.map((s) => (
                     <button key={s} onClick={() => set("strategy", s)} style={{
                       padding: "14px 16px", borderRadius: 10, textAlign: "left",
-                      background: form.strategy === s ? "var(--brand-tint)" : "var(--white-a04)",
+                      background: form.strategy === s ? "var(--brand-tint)" : "var(--ink-a04)",
                       border: `1px solid ${form.strategy === s ? "var(--orange-400)" : "var(--border-subtle)"}`,
                       color: form.strategy === s ? "var(--orange-400)" : "var(--text-primary)",
                       fontWeight: 500, fontSize: 14,
@@ -115,7 +115,7 @@ export default function CreateAgentPage() {
                   {DURATIONS.map((d) => (
                     <button key={d} onClick={() => set("duration", d)} style={{
                       padding: "8px 16px", borderRadius: 8, fontSize: 14, fontWeight: 500,
-                      background: form.duration === d ? "var(--brand-tint)" : "var(--white-a04)",
+                      background: form.duration === d ? "var(--brand-tint)" : "var(--ink-a04)",
                       border: `1px solid ${form.duration === d ? "var(--orange-400)" : "var(--border-subtle)"}`,
                       color: form.duration === d ? "var(--orange-400)" : "var(--text-primary)",
                     }}>{d}</button>

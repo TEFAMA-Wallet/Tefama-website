@@ -72,7 +72,7 @@ export default function FAQPage() {
           <div className="container" style={{ maxWidth: 760 }}>
             {FAQ_ALL.map((cat) => (
               <div key={cat.category} style={{ marginBottom: 48 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--orange-400)", marginBottom: 20 }}>{cat.category}</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 20 }}>{cat.category}</h3>
                 <FaqSection items={cat.items} />
               </div>
             ))}
