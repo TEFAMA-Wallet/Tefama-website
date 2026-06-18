@@ -7,65 +7,142 @@ const NETWORK    = (process.env.NEXT_PUBLIC_SUI_NETWORK ?? "testnet") as "testne
 const PKG_ID     = process.env.TEFAMA_PACKAGE_ID ?? "";
 const VAULT_ID   = process.env.VAULT_ID ?? "";
 const DB_PKG     = process.env.DEEPBOOK_PKG ?? "0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c";
-const POOL_ID    = process.env.POOL_ID ?? "0x1c19362ca52b8ffd7a33cee805a67d40f31e6ba303753fd3a4cfdfacea7163a5";
-const QUOTE_TYPE = process.env.QUOTE_TYPE ?? "0xf7152c05930480cd740d7311b5b8b45c6f488e3a53a11c3f74a6fac36a52e0d7::usdc::USDC";
-const BASE_TYPE  = process.env.BASE_TYPE  ?? "0x2::sui::SUI";
-const DEEP_TYPE  = process.env.DEEP_TYPE  ?? "0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP";
+const POOL_ID    = process.env.POOL_ID ?? "0x48c95963e9eac37a316b7ae04a0deb761bcdcc2b67912374d6036e7f0e9bae9f";
+const MANAGER_ID = process.env.BALANCE_MANAGER_ID ?? "";
+const QUOTE_TYPE = process.env.QUOTE_TYPE ?? "0x2::sui::SUI";
+const BASE_TYPE  = process.env.BASE_TYPE  ?? "0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP";
 const CLOCK_ID   = "0x6";
-const DCA_CLIP   = BigInt(process.env.DCA_CLIP ?? "190000000");
+
+// 0.3 SUI per DCA trade clip — covers DEEP_SUI min order (10 DEEP × ~0.023 SUI each)
+const DCA_CLIP = BigInt(process.env.DCA_CLIP ?? "300000000");
+
+// DEEP_SUI pool constants (from pool book object)
+const LOT_SIZE = BigInt(1_000_000);   // 1 DEEP  (6 decimals)
+const MIN_SIZE = BigInt(10_000_000);  // 10 DEEP minimum order
 
 const INDEXER = "https://deepbook-indexer.testnet.mystenlabs.com";
 
-// Vercel cron secret check
 function authorized(req: NextRequest) {
   const auth = req.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // not set — allow (dev)
+  if (!secret) return true;
   return auth === `Bearer ${secret}`;
 }
 
-async function getPrice(): Promise<{ price: number; low24h: number }> {
+interface PriceInfo {
+  price: number;       // SUI/USD
+  low24h: number;
+  deepSuiPrice: number; // DEEP per SUI
+}
+
+async function getPrice(): Promise<PriceInfo> {
   const res = await fetch(`${INDEXER}/summary`, { cache: "no-store" });
   const data = await res.json();
   const pairs: Record<string, any> = Array.isArray(data)
     ? Object.fromEntries(data.map((p: any) => [p.trading_pair, p]))
     : data;
-  const p = pairs["SUI_DBUSDC"] ?? Object.values(pairs)[0];
-  return {
-    price: Number(p?.last_price ?? 0),
-    low24h: Number(p?.low_price ?? p?.lowest_price_24h ?? 0),
-  };
+
+  const suiPair  = pairs["SUI_DBUSDC"] ?? {};
+  const deepPair = pairs["DEEP_SUI"]   ?? {};
+
+  const price      = Number(suiPair?.last_price ?? 0);
+  const low24h     = Number(suiPair?.low_price ?? suiPair?.lowest_price_24h ?? 0);
+  // deepPair: DEEP is base, SUI is quote → last_price = SUI per DEEP (e.g. 0.023)
+  const suiPerDeep   = Number(deepPair?.last_price ?? 0.023);
+  const deepSuiPrice = suiPerDeep > 0 ? 1 / suiPerDeep : 40; // DEEP per 1 SUI
+
+  return { price, low24h, deepSuiPrice };
 }
 
-async function executeDCA(suiClient: SuiJsonRpcClient, agentKeypair: Ed25519Keypair): Promise<string> {
-  const agentAddress = agentKeypair.toSuiAddress();
-  const tx = new Transaction();
+// Compute quantity in raw DEEP units, aligned to lot_size, capped to what SUI budget can afford.
+function calcDeepQuantity(deepSuiPrice: number): bigint {
+  const suiAmount = Number(DCA_CLIP) / 1e9;
+  // Use 70% of SUI to avoid running over budget (price may have moved)
+  const rawDeep = suiAmount * deepSuiPrice * 0.7 * 1_000_000; // DEEP raw units
+  // Round down to nearest lot_size
+  const lots = BigInt(Math.floor(rawDeep)) / LOT_SIZE;
+  const quantity = lots * LOT_SIZE;
+  return quantity < MIN_SIZE ? MIN_SIZE : quantity;
+}
 
+async function executeDCA(
+  suiClient: SuiJsonRpcClient,
+  agentKeypair: Ed25519Keypair,
+  deepSuiPrice: number,
+): Promise<string> {
+  if (!MANAGER_ID) throw new Error("BALANCE_MANAGER_ID not set — run contracts/client/setup-balance-manager.ts first");
+
+  const deepUnits = calcDeepQuantity(deepSuiPrice);
+
+  const tx = new Transaction();
+  tx.setSender(agentKeypair.toSuiAddress());
+
+  // 1. Request SUI from vault (hot-potato receipt must be settled in same PTB)
   const [quoteCoin, receipt] = tx.moveCall({
     target: `${PKG_ID}::vault::request_trade`,
     typeArguments: [QUOTE_TYPE, BASE_TYPE],
     arguments: [
       tx.object(VAULT_ID),
       tx.pure.u64(DCA_CLIP),
-      tx.pure.u64(0),
+      tx.pure.u64(0), // min_base_out: 0
       tx.object(CLOCK_ID),
     ],
   });
 
-  const deepFee = tx.moveCall({ target: "0x2::coin::zero", typeArguments: [DEEP_TYPE] });
-  const [base, quoteLeft, deepLeft] = tx.moveCall({
-    target: `${DB_PKG}::pool::swap_exact_quote_for_base`,
-    typeArguments: [BASE_TYPE, QUOTE_TYPE],
-    arguments: [tx.object(POOL_ID), quoteCoin, deepFee, tx.pure.u64(1), tx.object(CLOCK_ID)],
+  // 2. Deposit vault SUI into our BalanceManager
+  tx.moveCall({
+    target: `${DB_PKG}::balance_manager::deposit`,
+    typeArguments: [QUOTE_TYPE],
+    arguments: [tx.object(MANAGER_ID), quoteCoin],
   });
 
+  // 3. Generate trade proof as owner (agent wallet owns the BalanceManager)
+  const tradeProof = tx.moveCall({
+    target: `${DB_PKG}::balance_manager::generate_proof_as_owner`,
+    arguments: [tx.object(MANAGER_ID)],
+  });
+
+  // 4. Place a market buy for DEEP.
+  //    quantity must be a multiple of lot_size (1 DEEP) and >= min_size (10 DEEP).
+  //    isBid=true: paying SUI to receive DEEP.
+  tx.moveCall({
+    target: `${DB_PKG}::pool::place_market_order`,
+    typeArguments: [BASE_TYPE, QUOTE_TYPE],
+    arguments: [
+      tx.object(POOL_ID),
+      tx.object(MANAGER_ID),
+      tradeProof,
+      tx.pure.u64(0),          // client_order_id
+      tx.pure.u8(0),           // self_matching_option: SELF_MATCHING_ALLOWED
+      tx.pure.u64(deepUnits),  // quantity (DEEP raw, must be ≥ 10,000,000)
+      tx.pure.bool(true),      // is_bid: buying DEEP with SUI
+      tx.pure.bool(false),     // pay_with_deep: false (fee from SUI; pool is fee-free)
+      tx.object(CLOCK_ID),
+    ],
+  });
+
+  // 5. Withdraw all DEEP received from BalanceManager
+  const baseCoin = tx.moveCall({
+    target: `${DB_PKG}::balance_manager::withdraw_all`,
+    typeArguments: [BASE_TYPE],
+    arguments: [tx.object(MANAGER_ID)],
+  });
+
+  // 6. Withdraw remaining SUI (unspent due to partial fill or lot rounding)
+  const quoteLeftover = tx.moveCall({
+    target: `${DB_PKG}::balance_manager::withdraw_all`,
+    typeArguments: [QUOTE_TYPE],
+    arguments: [tx.object(MANAGER_ID)],
+  });
+
+  // 7. Settle: return DEEP + unused SUI to vault → emits TradeSettled event
   tx.moveCall({
     target: `${PKG_ID}::vault::settle_trade`,
     typeArguments: [QUOTE_TYPE, BASE_TYPE],
-    arguments: [tx.object(VAULT_ID), receipt, base, quoteLeft],
+    arguments: [tx.object(VAULT_ID), receipt, baseCoin, quoteLeftover],
   });
 
-  tx.transferObjects([deepLeft], agentAddress);
+  tx.setGasBudget(100_000_000);
 
   const res = await suiClient.signAndExecuteTransaction({
     signer: agentKeypair,
@@ -94,21 +171,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ skipped: true, reason: "AGENT_SECRET_KEY not set" });
   }
 
+  if (!MANAGER_ID) {
+    return NextResponse.json({ skipped: true, reason: "BALANCE_MANAGER_ID not set — run setup-balance-manager.ts" });
+  }
+
   try {
-    // DCA strategy: buy unless price is >5% above 24h low (avoid chasing spikes)
-    const { price, low24h } = await getPrice();
+    const { price, low24h, deepSuiPrice } = await getPrice();
+
+    // DCA strategy: buy unless price is >5% above 24h low
     if (low24h > 0 && price > low24h * 1.05) {
       return NextResponse.json({ skipped: true, reason: `Price ${price} too high vs 24h low ${low24h}`, price });
     }
 
-    const suiClient = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl(NETWORK), network: NETWORK });
+    const suiClient    = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl(NETWORK), network: NETWORK });
     const agentKeypair = Ed25519Keypair.fromSecretKey(agentSecret);
-    const digest = await executeDCA(suiClient, agentKeypair);
+    const digest       = await executeDCA(suiClient, agentKeypair, deepSuiPrice);
 
     return NextResponse.json({ success: true, digest, price, strategy: "DCA" });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    // Budget exhausted or vault paused — not a server error
     if (msg.includes("EOverBudget") || msg.includes("EPaused") || msg.includes("EExpired")) {
       return NextResponse.json({ skipped: true, reason: msg });
     }

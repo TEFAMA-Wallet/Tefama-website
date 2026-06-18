@@ -6,6 +6,7 @@ import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { usd } from "@/lib/data";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const STRATEGIES = ["DCA", "Buy-the-dip", "Grid Trading", "Momentum"];
 const DURATIONS = ["6h", "12h", "24h", "3d", "7d", "30d"];
@@ -14,15 +15,16 @@ const STEP_LABELS = ["Strategy", "Budget", "Parameters", "Review"];
 
 export default function CreateAgentPage() {
   const router = useRouter();
+  const { addAgentTriggered } = useNotifications();
   const [step, setStep] = useState(0);
   const [deploying, setDeploying] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({
-    name: "", strategy: "DCA", budget: 500, duration: "24h", slippage: 0.5, agreed: false,
+    name: "", strategy: "DCA", budget: 0.5, duration: "24h", slippage: 0.5, agreed: false,
   });
 
   const set = (k: string, v: string | number | boolean) => setForm((f) => ({ ...f, [k]: v }));
-  const risk = form.budget > 1500 || form.strategy === "Grid Trading" ? "High" : form.budget > 600 ? "Medium" : "Low";
+  const risk = form.budget > 5 || form.strategy === "Grid Trading" ? "High" : form.budget > 2 ? "Medium" : "Low";
   const riskColor = risk === "High" ? "var(--ember-500)" : risk === "Medium" ? "var(--orange-400)" : "var(--orange-300)";
 
   const deploy = async () => {
@@ -31,6 +33,7 @@ export default function CreateAgentPage() {
       const res = await fetch("/api/agent/run");
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      addAgentTriggered();
     } catch {
       // agent may skip (price too high, budget exhausted) — still show success UI
     }
@@ -52,7 +55,7 @@ export default function CreateAgentPage() {
             </p>
             <Card style={{ textAlign: "left", padding: "4px 18px", marginBottom: 24 }}>
               <div className="dl">
-                {[["Strategy", form.strategy], ["Budget", usd(form.budget)], ["Duration", form.duration]].map(([k, v]) => (
+                {[["Strategy", form.strategy], ["Budget", `${form.budget} SUI`], ["Duration", form.duration]].map(([k, v]) => (
                   <div key={k} className="r"><span className="k">{k}</span><span className="v">{v}</span></div>
                 ))}
               </div>
@@ -113,8 +116,8 @@ export default function CreateAgentPage() {
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Set your budget</h2>
               <div className="form-group">
-                <label className="form-label">Budget (USDC)</label>
-                <input className="form-input" type="number" min="10" max="10000" value={form.budget}
+                <label className="form-label">Budget (SUI)</label>
+                <input className="form-input" type="number" min="0.1" max="100" step="0.1" value={form.budget}
                   onChange={(e) => set("budget", Number(e.target.value))}
                   style={{ fontFamily: "var(--font-mono)", fontSize: 18 }} />
               </div>
@@ -164,7 +167,7 @@ export default function CreateAgentPage() {
                   {[
                     ["Name", form.name || "Unnamed agent"],
                     ["Strategy", form.strategy],
-                    ["Budget", usd(form.budget)],
+                    ["Budget", `${form.budget} SUI`],
                     ["Duration", form.duration],
                     ["Max slippage", form.slippage + "%"],
                     ["Risk", risk],

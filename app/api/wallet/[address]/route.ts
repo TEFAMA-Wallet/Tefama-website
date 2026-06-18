@@ -5,12 +5,12 @@ const NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK ?? "testnet") as "testnet" 
 const VAULT_ID = process.env.VAULT_ID ?? "";
 const PKG_ID   = process.env.TEFAMA_PACKAGE_ID ?? "0xf8cfd942cfe8332f0d98e3dbab38d26c3ea641531010e1bbf06e45c0199d97a1";
 
-// Accept multiple USDC variants that exist on testnet
+// Accept multiple USDC variants that exist on testnet (do NOT include SUI/QUOTE_TYPE here)
 const USDC_TYPES = [
-  process.env.QUOTE_TYPE,
   "0xf7152c05930480cd740d7311b5b8b45c6f488e3a53a11c3f74a6fac36a52e0d7::usdc::USDC",
   "0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd7117e29::usdc::USDC",
-].filter(Boolean) as string[];
+  "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN",
+];
 
 const DEEP_TYPE = process.env.DEEP_TYPE ??
   "0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP";

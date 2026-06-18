@@ -121,7 +121,9 @@ export default function DashboardPage() {
             </div>
             <div style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text-tertiary)" }}>
               <span>Budget used</span>
-              <span style={{ fontFamily: "var(--font-mono)" }}>{usd(vault.spent ?? 0, 4)} / {usd(vault.budgetCap ?? 0, 4)}</span>
+              <span style={{ fontFamily: "var(--font-mono)" }}>
+                {(vault.spent ?? 0).toFixed(4)} / {(vault.budgetCap ?? 0).toFixed(4)} SUI
+              </span>
             </div>
             <div style={{ height: 8, borderRadius: 4, background: "var(--ink-a08)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${budgetUsedPct}%`, background: "var(--orange-500)", borderRadius: 4, transition: "width 0.4s" }} />
@@ -178,7 +180,7 @@ export default function DashboardPage() {
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 500 }}>
-                        Bought {tx.baseReceived.toFixed(4)} SUI
+                        Bought {tx.baseReceived.toFixed(4)} DEEP
                       </div>
                       <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{tx.time}</div>
                     </div>

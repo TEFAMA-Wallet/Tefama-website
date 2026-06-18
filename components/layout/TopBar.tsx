@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 interface Crumb { label: string; path?: string; }
 
@@ -23,7 +25,9 @@ export default function TopBar({ crumbs, children }: TopBarProps) {
           </span>
         ))}
       </div>
+      <div style={{ flex: 1 }} />
       {children && <div className="topbar-right">{children}</div>}
+      <NotificationBell />
     </header>
   );
 }
