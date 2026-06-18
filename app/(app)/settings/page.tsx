@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Bell, Shield, Palette, Globe, LogOut } from "lucide-react";
+import { Bell, Shield, Globe, LogOut } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
+import { useZkLogin } from "@/context/ZkLoginContext";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -24,6 +25,10 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { session, address } = useZkLogin();
+  const email = session?.email ?? "—";
+  const shortAddr = address ? `${address.slice(0, 8)}…${address.slice(-6)}` : "—";
+
   const [s, setS] = useState({
     emailAlerts: true,
     budgetWarning: true,
@@ -86,7 +91,12 @@ export default function SettingsPage() {
             <h3>Account</h3>
           </div>
           <div className="dl">
-            {[["Email", "user@gmail.com"], ["Plan", "Free"], ["Network", "Sui Testnet"], ["Member since", "Jun 2026"]].map(([k, v]) => (
+            {[
+              ["Email", email],
+              ["Wallet", shortAddr],
+              ["Network", "Sui Testnet"],
+              ["Plan", "Free"],
+            ].map(([k, v]) => (
               <div key={k} className="r">
                 <span className="k">{k}</span>
                 <span className="v" style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{v}</span>
