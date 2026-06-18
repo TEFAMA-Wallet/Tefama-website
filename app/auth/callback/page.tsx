@@ -7,13 +7,36 @@ import { ShieldCheck, AlertCircle } from "lucide-react";
 import Card from "@/components/ui/Card";
 import { completeLogin } from "@/lib/zklogin";
 import { useZkLogin } from "@/context/ZkLoginContext";
+import { jwtToAddress, decodeJwt } from "@mysten/sui/zklogin";
 
 type Status = "processing" | "error";
+
+// Derive address + profile without generating a ZK proof (for mobile use)
+async function mobileLogin(jwt: string) {
+  const res = await fetch("/api/zklogin/salt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: jwt }),
+  });
+  if (!res.ok) throw new Error("Salt service error");
+  const { salt } = await res.json() as { salt: string };
+
+  const address = jwtToAddress(jwt, salt, false);
+  const claims  = decodeJwt(jwt) as Record<string, unknown>;
+
+  return {
+    address,
+    sub:     String(claims.sub     ?? ""),
+    email:   String(claims.email   ?? ""),
+    name:    String(claims.name    ?? ""),
+    picture: String(claims.picture ?? ""),
+  };
+}
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const { setSession } = useZkLogin();
-  const [status, setStatus] = useState<Status>("processing");
+  const [status,   setStatus]   = useState<Status>("processing");
   const [errorMsg, setErrorMsg] = useState("");
   const ran = useRef(false);
 
@@ -21,9 +44,10 @@ export default function AuthCallbackPage() {
     if (ran.current) return;
     ran.current = true;
 
-    const hash = window.location.hash;
+    const hash   = window.location.hash;
     const params = new URLSearchParams(hash.slice(1));
-    const jwt = params.get("id_token");
+    const jwt    = params.get("id_token");
+    const state  = params.get("state"); // "mobile" when coming from the app
 
     if (!jwt) {
       setErrorMsg("No identity token in redirect. Please sign in again.");
@@ -31,18 +55,35 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    if (state === "mobile") {
+      // Mobile app path: skip ZK proof, redirect back via deep link
+      mobileLogin(jwt)
+        .then(({ address, sub, email, name, picture }) => {
+          const p = new URLSearchParams({ address, sub, email, name, picture });
+          // openAuthSessionAsync in Expo watches for the tefama:// scheme
+          window.location.href = `tefama://auth?${p.toString()}`;
+        })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          setErrorMsg(msg);
+          setStatus("error");
+        });
+      return;
+    }
+
+    // Web path: full zkLogin (ZK proof generation)
     completeLogin(jwt)
       .then((result) => {
         setSession({
-          provider: "google",
-          address: result.address,
-          email: result.email,
-          name: result.name,
-          picture: result.picture,
-          salt: result.salt,
-          maxEpoch: result.maxEpoch,
+          provider:  "google",
+          address:   result.address,
+          email:     result.email,
+          name:      result.name,
+          picture:   result.picture,
+          salt:      result.salt,
+          maxEpoch:  result.maxEpoch,
           secretKey: result.secretKey,
-          zkProof: result.zkProof,
+          zkProof:   result.zkProof,
         });
         router.replace("/verify-email");
       })
@@ -83,38 +124,36 @@ export default function AuthCallbackPage() {
                 className="txt-sec"
                 style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}
               >
-                Generating your zero-knowledge proof.
+                Deriving your wallet address.
                 <br />
                 This takes a few seconds.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                {["Fetching salt", "Generating proof", "Deriving address"].map(
-                  (step) => (
-                    <div
-                      key={step}
+                {["Fetching salt", "Deriving address", "Returning to app"].map((step) => (
+                  <div
+                    key={step}
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-tertiary)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span
                       style={{
-                        fontSize: 12,
-                        color: "var(--text-tertiary)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
+                        width: 14,
+                        height: 14,
+                        border: "2px solid var(--orange-400)",
+                        borderTopColor: "transparent",
+                        borderRadius: "50%",
+                        animation: "spin 0.8s linear infinite",
+                        display: "inline-block",
                       }}
-                    >
-                      <span
-                        style={{
-                          width: 14,
-                          height: 14,
-                          border: "2px solid var(--orange-400)",
-                          borderTopColor: "transparent",
-                          borderRadius: "50%",
-                          animation: "spin 0.8s linear infinite",
-                          display: "inline-block",
-                        }}
-                      />
-                      {step}
-                    </div>
-                  )
-                )}
+                    />
+                    {step}
+                  </div>
+                ))}
               </div>
             </>
           )}

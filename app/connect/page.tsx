@@ -35,7 +35,9 @@ export default function ConnectPage() {
     try {
       const redirectUri = `${window.location.origin}/auth/callback`;
       const url = await buildGoogleLoginUrl(GOOGLE_CLIENT_ID, redirectUri);
-      window.location.href = url;
+      // Append state=mobile when the request comes from the mobile app (?mobile=1)
+      const isMobile = new URLSearchParams(window.location.search).get("mobile") === "1";
+      window.location.href = isMobile ? `${url}&state=mobile` : url;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to start login";
       setError(msg);
