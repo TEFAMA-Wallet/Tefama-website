@@ -36,14 +36,16 @@ export async function GET(req: NextRequest) {
       .filter((e: any) => !vaultId || (e.parsedJson as any)?.vault_id === vaultId)
       .map((e: any) => {
         const f = e.parsedJson as any;
-        const quoteSpent  = Number(f.quote_spent  ?? f.amount ?? 0) / 1e9;
-        const baseReceived= Number(f.base_received ?? f.base_out ?? 0) / 1e9;
+        // Vault trades SUI (quote, 9 decimals) → DEEP (base, 9 decimals)
+        const quoteSpent   = Number(f.quote_spent   ?? f.amount   ?? 0) / 1e9;
+        const baseReceived = Number(f.base_received  ?? f.base_out ?? 0) / 1e9;
+        // price = SUI per DEEP
         const price = baseReceived > 0 ? quoteSpent / baseReceived : 0;
         return {
           id: e.id.txDigest,
           digest: e.id.txDigest,
           type: "buy",
-          asset: "SUI",
+          asset: "DEEP",
           quoteSpent,
           baseReceived,
           price,

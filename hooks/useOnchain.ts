@@ -9,11 +9,14 @@ export function usePrice() {
     revalidateOnFocus: true,
   });
   return {
-    price:     data?.price     ?? 0,
-    change24h: data?.change24h ?? 0,
-    high24h:   data?.high24h   ?? 0,
-    low24h:    data?.low24h    ?? 0,
-    volume24h: data?.volume24h ?? 0,
+    price:        data?.price        ?? 0,
+    change24h:    data?.change24h    ?? 0,
+    high24h:      data?.high24h      ?? 0,
+    low24h:       data?.low24h       ?? 0,
+    volume24h:    data?.volume24h    ?? 0,
+    deepPrice:    data?.deepPrice    ?? 0,
+    deepInSui:    data?.deepInSui    ?? 0,
+    deepChange24h:data?.deepChange24h?? 0,
     isLoading,
     error,
   };
@@ -36,10 +39,10 @@ export function useWallet(address: string | null) {
   };
 }
 
-export function useTrades(vaultId?: string, price?: number) {
+export function useTrades(vaultId?: string, deepPrice?: number) {
   const params = new URLSearchParams();
-  if (vaultId) params.set("vault", vaultId);
-  if (price)   params.set("price", String(price));
+  if (vaultId)   params.set("vault",  vaultId);
+  if (deepPrice) params.set("price",  String(deepPrice));
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/trades?${params}`,

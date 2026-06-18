@@ -45,14 +45,14 @@ function StatCard({ label, Icon, value, delta, deltaUp, sub, loading }: {
 
 export default function DashboardPage() {
   const { address, session } = useZkLogin();
-  const { price, change24h, isLoading: priceLoading } = usePrice();
-  const { suiBalance, usdcBalance, vault, isLoading: walletLoading } = useWallet(address);
+  const { price, deepPrice, change24h, isLoading: priceLoading } = usePrice();
+  const { suiBalance, usdcBalance, deepBalance, vault, isLoading: walletLoading } = useWallet(address);
   const { trades, pnl, roi, count: tradeCount, isLoading: tradesLoading } = useTrades(
     vault?.id,
-    price
+    deepPrice
   );
 
-  const totalUsd = suiBalance * price + usdcBalance;
+  const totalUsd = suiBalance * price + usdcBalance + deepBalance * deepPrice;
   const recent   = trades.slice(0, 6);
   const loading  = walletLoading || priceLoading;
 

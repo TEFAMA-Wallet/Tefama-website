@@ -19,16 +19,16 @@ function Skeleton({ w = 80, h = 20 }: { w?: number | string; h?: number }) {
 
 export default function WalletPage() {
   const { address } = useZkLogin();
-  const { price, isLoading: priceLoading } = usePrice();
+  const { price, deepPrice, isLoading: priceLoading } = usePrice();
   const { suiBalance, usdcBalance, deepBalance, isLoading } = useWallet(address);
   const [copied, setCopied] = useState(false);
 
-  const totalUsd = suiBalance * price + usdcBalance;
+  const totalUsd = suiBalance * price + usdcBalance + deepBalance * deepPrice;
 
   const tokens = [
-    { sym: "SUI",    name: "Sui",           balance: suiBalance,  price,   usd_: suiBalance * price,  decimals: 4 },
-    { sym: "USDC",   name: "USD Coin",       balance: usdcBalance, price: 1, usd_: usdcBalance,        decimals: 2 },
-    { sym: "DEEP",   name: "DeepBook Token", balance: deepBalance, price: 0, usd_: 0,                  decimals: 4 },
+    { sym: "SUI",  name: "Sui",           balance: suiBalance,  price,      usd_: suiBalance * price,      decimals: 4 },
+    { sym: "USDC", name: "USD Coin",       balance: usdcBalance, price: 1,   usd_: usdcBalance,             decimals: 2 },
+    { sym: "DEEP", name: "DeepBook Token", balance: deepBalance, price: deepPrice, usd_: deepBalance * deepPrice, decimals: 4 },
   ];
   const totalNonZero = tokens.filter(t => t.usd_ > 0).reduce((s, t) => s + t.usd_, 0) || 1;
 
@@ -68,7 +68,7 @@ export default function WalletPage() {
                     {usd(totalUsd, 2)}
                   </div>
                   <div style={{ fontSize: 14, color: "var(--text-secondary)", fontFamily: "var(--font-mono)", marginTop: 4 }}>
-                    SUI @ {usd(price, 4)} · DeepBook live price
+                    SUI @ {usd(price, 4)} · DEEP @ {usd(deepPrice, 4)} · DeepBook live
                   </div>
                 </>
               )}

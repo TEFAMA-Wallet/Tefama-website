@@ -12,9 +12,9 @@ import { usd } from "@/lib/data";
 export default function AgentDetailsPage() {
   const router = useRouter();
   const { address } = useZkLogin();
-  const { price } = usePrice();
+  const { deepPrice } = usePrice();
   const { vault, isLoading: walletLoading } = useWallet(address);
-  const { trades, pnl, roi, count, isLoading: tradesLoading, refresh } = useTrades(vault?.id, price);
+  const { trades, pnl, roi, count, isLoading: tradesLoading, refresh } = useTrades(vault?.id, deepPrice);
 
   const spent  = vault?.spent ?? 0;
   const budget = vault?.budgetCap ?? 0;

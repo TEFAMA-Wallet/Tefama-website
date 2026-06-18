@@ -16,9 +16,9 @@ function Skel() {
 
 export default function AgentsPage() {
   const { address } = useZkLogin();
-  const { price } = usePrice();
+  const { deepPrice } = usePrice();
   const { vault, isLoading: walletLoading } = useWallet(address);
-  const { pnl, roi, count, isLoading: tradesLoading } = useTrades(vault?.id, price);
+  const { pnl, roi, count, isLoading: tradesLoading } = useTrades(vault?.id, deepPrice);
 
   const isLoading = walletLoading || tradesLoading;
   const spent     = vault?.spent ?? 0;

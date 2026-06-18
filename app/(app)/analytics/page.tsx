@@ -25,12 +25,12 @@ function StatCard({ label, Icon, value, sub, loading }: {
 
 export default function AnalyticsPage() {
   const { address } = useZkLogin();
-  const { price, change24h, high24h, low24h, volume24h, isLoading: priceLoading } = usePrice();
-  const { vault, suiBalance, usdcBalance, isLoading: walletLoading } = useWallet(address);
-  const { trades, pnl, roi, count, isLoading: tradesLoading } = useTrades(vault?.id, price);
+  const { price, deepPrice, deepChange24h, change24h, high24h, low24h, volume24h, isLoading: priceLoading } = usePrice();
+  const { vault, suiBalance, usdcBalance, deepBalance, isLoading: walletLoading } = useWallet(address);
+  const { trades, pnl, roi, count, isLoading: tradesLoading } = useTrades(vault?.id, deepPrice);
 
   const isLoading = priceLoading || walletLoading || tradesLoading;
-  const totalValue = suiBalance * price + usdcBalance;
+  const totalValue = suiBalance * price + usdcBalance + deepBalance * deepPrice;
   const spent      = vault?.spent ?? 0;
 
   const avgBuyPrice = count > 0
@@ -82,13 +82,13 @@ export default function AnalyticsPage() {
         </div>
 
         <Card className="panel" style={{ marginTop: 20 }}>
-          <div className="panel-head"><h3>24 h market — SUI / USDC (DeepBook)</h3></div>
+          <div className="panel-head"><h3>24 h market · DeepBook testnet</h3></div>
           <div className="mini-row">
             {[
-              { l: "Price",    v: usd(price, 4) },
-              { l: "24h High", v: usd(high24h, 4) },
-              { l: "24h Low",  v: usd(low24h, 4) },
-              { l: "Volume",   v: usd(volume24h, 0) },
+              { l: "SUI price",  v: usd(price, 4) },
+              { l: "SUI 24h hi", v: usd(high24h, 4) },
+              { l: "SUI 24h lo", v: usd(low24h, 4) },
+              { l: "DEEP price", v: usd(deepPrice, 4) },
             ].map(({ l, v }) => (
               <div key={l} className="mini">
                 <div className="l">{l}</div>

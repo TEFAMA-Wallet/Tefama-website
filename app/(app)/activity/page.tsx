@@ -20,9 +20,9 @@ function Skeleton() {
 
 export default function ActivityPage() {
   const { address } = useZkLogin();
-  const { price } = usePrice();
+  const { deepPrice } = usePrice();
   const { vault } = useWallet(address);
-  const { trades, pnl, roi, count, isLoading, refresh } = useTrades(vault?.id, price);
+  const { trades, pnl, roi, count, isLoading, refresh } = useTrades(vault?.id, deepPrice);
 
   return (
     <>
