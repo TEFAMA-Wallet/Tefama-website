@@ -112,3 +112,37 @@ sui client call --package <PackageID> --module vault --function set_paused \
 
 - One vault maps to one DeepBook pool, so vaults are single-pair by design.
 - The agent's scoped key must be allowlisted via `vault::add_agent` and is never the owner key.
+
+## Integration values
+
+Public values for wiring a frontend or a script. Copy as-is. These are safe to
+share; they are addresses, not secrets.
+
+```
+SUI_NETWORK=testnet
+TEFAMA_PACKAGE_ID=0xf8cfd942cfe8332f0d98e3dbab38d26c3ea641531010e1bbf06e45c0199d97a1
+VAULT_ID=0x499bbf18beaaedd285bfd2b074c4d8951c74318e45596b5e478f4b38cbc90293
+DEEPBOOK_PKG=0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c
+POOL_ID=0x48c95963e9eac37a316b7ae04a0deb761bcdcc2b67912374d6036e7f0e9bae9f
+QUOTE_TYPE=0x2::sui::SUI
+BASE_TYPE=0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP
+DEEP_TYPE=0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP
+```
+
+To read vault state or wire the frontend, the values above are all you need.
+
+### Keys (never commit or share)
+
+`AGENT_SECRET_KEY` and `OWNER_SECRET_KEY` are private keys; they control the
+funds and are gitignored on purpose. Generate your own to run the scripts, do
+not reuse anyone else's:
+
+```
+sui client new-address ed25519 my-agent      # creates a key + address
+sui keytool export --key-identity my-agent    # prints its suiprivkey... value
+```
+
+Put the exported `suiprivkey...` value in your local `.env` as `AGENT_SECRET_KEY`
+(and the same for an owner key if you need owner actions). To trade, the owner
+must allowlist your agent address with `vault::add_agent`. `CAP_ID` is the
+OwnerCap object id, owner authority, kept private by whoever holds it.
