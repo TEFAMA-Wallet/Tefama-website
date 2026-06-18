@@ -5,11 +5,15 @@ import Image from "next/image";
 import { Mail, Check } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { useZkLogin } from "@/context/ZkLoginContext";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const { session } = useZkLogin();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const email = session?.email ?? "";
 
   const verify = () => {
     setLoading(true);
@@ -29,7 +33,7 @@ export default function VerifyEmailPage() {
           </div>
           <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Check your email</h2>
           <p className="txt-sec" style={{ textAlign: "center", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-            We sent a 6-digit code to <strong style={{ color: "var(--text-primary)" }}>your@email.com</strong>.<br />
+            We sent a 6-digit code to <strong style={{ color: "var(--text-primary)" }}>{email}</strong>.<br />
             Enter it below to access your wallet.
           </p>
 
