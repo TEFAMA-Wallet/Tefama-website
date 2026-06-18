@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Fingerprint, ShieldCheck, AlertCircle } from "lucide-react";
@@ -10,15 +10,14 @@ import { useZkLogin } from "@/context/ZkLoginContext";
 const CRED_KEY = "tefama-biometric-id";
 
 async function runBiometric(email: string, name: string): Promise<void> {
-  if (!window.PublicKeyCredential) throw new Error("WebAuthn not supported in this browser.");
+  if (!window.PublicKeyCredential) return; // browser doesn't support WebAuthn — skip
 
   const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  if (!available) return; // no biometric hardware — skip silently, proceed to dashboard
+  if (!available) return; // no fingerprint/face ID hardware — skip silently
 
   const stored = localStorage.getItem(CRED_KEY);
 
   if (stored) {
-    // Already registered — just verify
     await navigator.credentials.get({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
@@ -32,7 +31,6 @@ async function runBiometric(email: string, name: string): Promise<void> {
       },
     });
   } else {
-    // First time — register a new platform credential
     const cred = await navigator.credentials.create({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
@@ -51,7 +49,6 @@ async function runBiometric(email: string, name: string): Promise<void> {
       },
     }) as PublicKeyCredential;
 
-    // Persist the credential ID so future logins can verify
     const id = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
     localStorage.setItem(CRED_KEY, id);
   }
@@ -60,8 +57,25 @@ async function runBiometric(email: string, name: string): Promise<void> {
 export default function BiometricPage() {
   const router = useRouter();
   const { session } = useZkLogin();
-  const [state, setState] = useState<"idle" | "scanning" | "done" | "error">("idle");
+  const [state, setState] = useState<"checking" | "idle" | "scanning" | "done" | "error">("checking");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // On mount: check if biometric is available. If not, skip straight to dashboard.
+  useEffect(() => {
+    async function check() {
+      if (!window.PublicKeyCredential) {
+        router.replace("/dashboard");
+        return;
+      }
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!available) {
+        router.replace("/dashboard");
+        return;
+      }
+      setState("idle");
+    }
+    check();
+  }, [router]);
 
   const scan = async () => {
     setState("scanning");
@@ -76,6 +90,24 @@ export default function BiometricPage() {
       setState("error");
     }
   };
+
+  if (state === "checking") {
+    return (
+      <div className="auth-wrap">
+        <div className="auth-card rise">
+          <div className="auth-logo">
+            <Image src="/logo-mark.png" alt="TEFAMA" width={32} height={32} style={{ objectFit: "contain" }} />
+            <span className="logo-word" style={{ fontSize: 18 }}>TEFAMA</span>
+          </div>
+          <Card variant="raised" style={{ padding: 40, textAlign: "center" }}>
+            <div className="auth-orb"><Fingerprint size={48} /></div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Checking device…</h2>
+            <p className="txt-sec" style={{ fontSize: 14 }}>Detecting biometric capability.</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-wrap">
@@ -103,7 +135,7 @@ export default function BiometricPage() {
 
           <p className="txt-sec" style={{ fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
             {state === "idle"
-              ? "Use your device biometric to authorize access to your wallet. This stays local — we never see it."
+              ? "Use your device fingerprint or face ID to secure your wallet. This stays local — we never see it."
               : state === "scanning"
               ? "Follow the prompt on your device."
               : state === "done"
@@ -119,10 +151,10 @@ export default function BiometricPage() {
 
           {(state === "idle" || state === "error") && (
             <button
-              onClick={() => router.push("/verify-email")}
+              onClick={() => router.push("/dashboard")}
               style={{ marginTop: 16, fontSize: 13, color: "var(--text-secondary)", background: "none", border: "none", cursor: "pointer" }}
             >
-              Use email code instead
+              Skip for now
             </button>
           )}
         </Card>

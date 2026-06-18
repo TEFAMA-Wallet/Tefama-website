@@ -44,7 +44,7 @@ export default function AuthCallbackPage() {
           secretKey: result.secretKey,
           zkProof: result.zkProof,
         });
-        router.replace("/biometric");
+        router.replace("/verify-email");
       })
       .catch((err: unknown) => {
         setErrorMsg(err instanceof Error ? err.message : "Unknown error");

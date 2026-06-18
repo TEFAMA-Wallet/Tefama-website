@@ -4,25 +4,39 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Bot, ChartLine, Activity, Wallet, Settings, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { AGENTS } from "@/lib/data";
 import { useZkLogin } from "@/context/ZkLoginContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
-const NAV_MAIN = [
-  { key: "dashboard", path: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
-  { key: "agents", path: "/agents", label: "My agents", Icon: Bot, badge: AGENTS.filter((a) => a.status === "active").length },
-  { key: "analytics", path: "/analytics", label: "Portfolio", Icon: ChartLine },
-  { key: "activity", path: "/activity", label: "Activity", Icon: Activity },
-];
+type NavItem = { key: string; path: string; label: string; Icon: React.ElementType; badge?: number };
+type NavGroup = { section: string | null; items: NavItem[] };
 
-const NAV_WALLET = [
-  { key: "wallet", path: "/wallet", label: "Wallet", Icon: Wallet },
-  { key: "settings", path: "/settings", label: "Settings", Icon: Settings },
+const NAV: NavGroup[] = [
+  {
+    section: null,
+    items: [
+      { key: "dashboard", path: "/dashboard",  label: "Dashboard",  Icon: LayoutDashboard },
+      { key: "wallet",    path: "/wallet",      label: "Wallet",     Icon: Wallet },
+    ],
+  },
+  {
+    section: "Autonomous Agent",
+    items: [
+      { key: "agents",    path: "/agents",      label: "My Agent",   Icon: Bot, badge: 1 },
+      { key: "activity",  path: "/activity",    label: "Activity",   Icon: Activity },
+      { key: "analytics", path: "/analytics",   label: "Analytics",  Icon: ChartLine },
+    ],
+  },
+  {
+    section: "Account",
+    items: [
+      { key: "settings",  path: "/settings",    label: "Settings",   Icon: Settings },
+    ],
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [copied, setCopied] = useState(false);
   const { address, shortAddress, logout } = useZkLogin();
 
@@ -33,14 +47,6 @@ export default function Sidebar() {
     setTimeout(() => setCopied(false), 1100);
   };
 
-  const item = (n: { key: string; path: string; label: string; Icon: React.ElementType; badge?: number }) => (
-    <Link key={n.key} href={n.path} className={`sb-item${pathname === n.path ? " active" : ""}`}>
-      <n.Icon size={19} className="ico" />
-      <span>{n.label}</span>
-      {n.badge ? <span className="sb-badge">{n.badge}</span> : null}
-    </Link>
-  );
-
   return (
     <aside className="sidebar">
       <div className="sb-logo" style={{ justifyContent: "space-between" }}>
@@ -50,11 +56,22 @@ export default function Sidebar() {
         </Link>
         <ThemeToggle />
       </div>
+
       <nav className="sb-nav">
-        {NAV_MAIN.map(item)}
-        <div className="sb-section">Account</div>
-        {NAV_WALLET.map(item)}
+        {NAV.map((group) => (
+          <div key={group.section ?? "main"}>
+            {group.section && <div className="sb-section">{group.section}</div>}
+            {group.items.map((n) => (
+              <Link key={n.key} href={n.path} className={`sb-item${pathname === n.path || pathname.startsWith(n.path + "/") ? " active" : ""}`}>
+                <n.Icon size={19} className="ico" />
+                <span>{n.label}</span>
+                {n.badge ? <span className="sb-badge">{n.badge}</span> : null}
+              </Link>
+            ))}
+          </div>
+        ))}
       </nav>
+
       <div className="sb-wallet">
         <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={copy}>
           <span className="addr mono">{shortAddress ?? "—"}</span>

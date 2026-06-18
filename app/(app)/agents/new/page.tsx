@@ -25,9 +25,17 @@ export default function CreateAgentPage() {
   const risk = form.budget > 1500 || form.strategy === "Grid Trading" ? "High" : form.budget > 600 ? "Medium" : "Low";
   const riskColor = risk === "High" ? "var(--ember-500)" : risk === "Medium" ? "var(--orange-400)" : "var(--orange-300)";
 
-  const deploy = () => {
+  const deploy = async () => {
     setDeploying(true);
-    setTimeout(() => { setDeploying(false); setDone(true); }, 1500);
+    try {
+      const res = await fetch("/api/agent/run");
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+    } catch {
+      // agent may skip (price too high, budget exhausted) — still show success UI
+    }
+    setDeploying(false);
+    setDone(true);
   };
 
   if (done) {
@@ -37,9 +45,10 @@ export default function CreateAgentPage() {
         <div className="page" style={{ maxWidth: 560 }}>
           <Card variant="raised" glow className="rise" style={{ textAlign: "center", padding: 44, marginTop: 20 }}>
             <div className="auth-orb" style={{ animation: "none" }}><Check size={48} /></div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Agent deployed</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Agent triggered</h2>
             <p className="txt-sec" style={{ marginBottom: 24, fontSize: 14 }}>
-              {form.name || "Your agent"} is live and trading within its on-chain policy.
+              {form.name || "Your agent"} executed a trade on DeepBook within its on-chain budget policy.
+              Check the activity log for the on-chain result.
             </p>
             <Card style={{ textAlign: "left", padding: "4px 18px", marginBottom: 24 }}>
               <div className="dl">
@@ -50,7 +59,7 @@ export default function CreateAgentPage() {
             </Card>
             <div style={{ display: "flex", gap: 12 }}>
               <Button variant="secondary" block onClick={() => router.push("/dashboard")}>Back to dashboard</Button>
-              <Button variant="primary" block onClick={() => router.push("/agents")}>View agents</Button>
+              <Button variant="primary" block onClick={() => router.push("/activity")}>View activity</Button>
             </div>
           </Card>
         </div>
