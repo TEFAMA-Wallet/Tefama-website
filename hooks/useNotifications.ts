@@ -41,16 +41,21 @@ export function useNotifications() {
   const { trades }  = useTrades(vault?.id, deepPrice);
 
   const [notifs, setNotifs] = useState<Notification[]>([]);
-  const seenTrades  = useRef<Set<string>>(new Set());
-  const lastPaused  = useRef<boolean | null>(null);
-  const warned80    = useRef(false);
-  const warned100   = useRef(false);
-  const initialized = useRef(false);
+  const seenTrades    = useRef<Set<string>>(new Set());
+  const firstTradeSet = useRef(false); // true after first trades fetch — skip initial batch
+  const lastPaused    = useRef<boolean | null>(null);
+  const warned80      = useRef(false);
+  const warned100     = useRef(false);
+  const initialized   = useRef(false);
 
-  // Load from storage once on mount
+  // Load from storage once on mount — also pre-seed seenTrades so existing
+  // trades don't fire as "new" on every page visit
   useEffect(() => {
     const stored = load();
     setNotifs(stored);
+    stored.forEach(n => {
+      if (n.id.startsWith("trade-")) seenTrades.current.add(n.id.slice(6));
+    });
     initialized.current = true;
   }, []);
 
@@ -60,20 +65,23 @@ export function useNotifications() {
     save(notifs);
   }, [notifs]);
 
-  // Watch new trades
+  // Watch new trades — skip the first fetch (those are historical, not new events)
   useEffect(() => {
     if (!trades?.length) return;
+
+    if (!firstTradeSet.current) {
+      // First load: mark all existing trades as seen without notifying
+      trades.forEach((tx: any) => seenTrades.current.add(tx.id));
+      firstTradeSet.current = true;
+      return;
+    }
+
     let updated = [...notifs];
     let changed = false;
 
     trades.forEach((tx: any) => {
       if (seenTrades.current.has(tx.id)) return;
       seenTrades.current.add(tx.id);
-
-      // Skip trades that were already in storage before this session
-      const alreadyStored = notifs.some(n => n.id === `trade-${tx.id}`);
-      if (alreadyStored) return;
-
       changed = true;
       updated = push(updated, {
         id:    `trade-${tx.id}`,

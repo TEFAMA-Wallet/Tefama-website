@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Bot, ArrowDownLeft, ExternalLink, Plus } from "lucide-react";
+import { Bot, ArrowDownLeft, ExternalLink, Plus, Play } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -29,11 +29,7 @@ export default function AgentsPage() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: "My agents" }]}>
-        <Link href="/agents/new">
-          <Button variant="primary" size="sm" icon={<Plus size={15} />}>Run agent</Button>
-        </Link>
-      </TopBar>
+      <TopBar crumbs={[{ label: "My agents" }]} />
       <div className="page">
 
         {/* Hero agent card */}
@@ -56,9 +52,6 @@ export default function AgentsPage() {
                 Dollar-cost averaging · SUI → DEEP · DeepBook testnet
               </div>
             </div>
-            <Link href="/agents/vault">
-              <Button variant="secondary" size="sm">View details</Button>
-            </Link>
           </div>
 
           {/* Budget bar */}
@@ -78,7 +71,7 @@ export default function AgentsPage() {
           </div>
 
           {/* 4 stat pills */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
             {[
               { l: "P&L",    v: isLoading ? null : (pnl >= 0 ? "+" : "") + usd(pnl, 4),   color: pnl >= 0 ? "var(--orange-400)" : "var(--ember-500)" },
               { l: "ROI",    v: isLoading ? null : (roi >= 0 ? "+" : "") + roi.toFixed(2) + "%", color: roi >= 0 ? "var(--orange-400)" : "var(--ember-500)" },
@@ -92,6 +85,16 @@ export default function AgentsPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* CTA — lives in the card body, not the navbar */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <Link href="/agents/new" style={{ flex: 1 }}>
+              <Button variant="primary" block icon={<Play size={15} />}>Run agent now</Button>
+            </Link>
+            <Link href="/agents/vault">
+              <Button variant="secondary">Vault settings</Button>
+            </Link>
           </div>
         </Card>
 

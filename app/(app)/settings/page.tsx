@@ -91,7 +91,7 @@ export default function SettingsPage() {
   return (
     <>
       <TopBar crumbs={[{ label: "Settings" }]} />
-      <div className="page" style={{ maxWidth: 700 }}>
+      <div className="page" style={{ maxWidth: 900 }}>
 
         {/* Profile hero */}
         <Card variant="raised" className="rise" style={{ padding: 24, marginBottom: 20 }}>
@@ -139,58 +139,59 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Notifications */}
-        <Card className="panel" style={{ marginBottom: 20 }}>
-          <SectionHead icon={<Bell size={17} />} title="Notifications" />
-          <div style={{ paddingTop: 4 }}>
-            <SettingRow label="Budget warnings" desc="Alert when agent hits 80% of its daily budget cap">
-              <Toggle checked={notifs.budgetWarning} onChange={v => setNotifs(p => ({ ...p, budgetWarning: v }))} />
-            </SettingRow>
-            <SettingRow label="Trade executions" desc="Notify after every DCA trade the agent completes">
-              <Toggle checked={notifs.tradeExec} onChange={v => setNotifs(p => ({ ...p, tradeExec: v }))} />
-            </SettingRow>
-            <SettingRow label="Weekly report" desc="Sunday summary of P&L, trades, and vault health">
-              <Toggle checked={notifs.weeklyReport} onChange={v => setNotifs(p => ({ ...p, weeklyReport: v }))} />
-            </SettingRow>
-          </div>
-        </Card>
-
-        {/* Security */}
-        <Card className="panel" style={{ marginBottom: 20 }}>
-          <SectionHead icon={<Shield size={17} />} title="Security" />
-          <div style={{ paddingTop: 4 }}>
-            <SettingRow label="Biometric unlock" desc="Use Face ID or fingerprint when opening the app">
-              <Toggle checked={security.biometric} onChange={v => setSecurity(p => ({ ...p, biometric: v }))} />
-            </SettingRow>
-            <SettingRow label="Session lock" desc="Auto-lock wallet after 15 minutes of inactivity">
-              <Toggle checked={security.sessionLock} onChange={v => setSecurity(p => ({ ...p, sessionLock: v }))} />
-            </SettingRow>
-            <div
-              onClick={() => router.push("/agents/vault")}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", cursor: "pointer" }}
-            >
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>Agent permissions</div>
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>View vault allowlist, pause or revoke the agent</div>
-              </div>
-              <ChevronRight size={16} style={{ color: "var(--text-tertiary)" }} />
+        {/* Notifications + Security — side by side */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+          <Card className="panel">
+            <SectionHead icon={<Bell size={17} />} title="Notifications" />
+            <div style={{ paddingTop: 4 }}>
+              <SettingRow label="Budget warnings" desc="Alert when agent hits 80% of its daily budget cap">
+                <Toggle checked={notifs.budgetWarning} onChange={v => setNotifs(p => ({ ...p, budgetWarning: v }))} />
+              </SettingRow>
+              <SettingRow label="Trade executions" desc="Notify after every DCA trade the agent completes">
+                <Toggle checked={notifs.tradeExec} onChange={v => setNotifs(p => ({ ...p, tradeExec: v }))} />
+              </SettingRow>
+              <SettingRow label="Weekly report" desc="Sunday summary of P&L, trades, and vault health">
+                <Toggle checked={notifs.weeklyReport} onChange={v => setNotifs(p => ({ ...p, weeklyReport: v }))} />
+              </SettingRow>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Danger zone */}
-        <Card className="panel" style={{ marginBottom: 20, borderColor: "var(--ember-500, #f05)" }}>
+          <Card className="panel">
+            <SectionHead icon={<Shield size={17} />} title="Security" />
+            <div style={{ paddingTop: 4 }}>
+              <SettingRow label="Biometric unlock" desc="Use Face ID or fingerprint when opening the app">
+                <Toggle checked={security.biometric} onChange={v => setSecurity(p => ({ ...p, biometric: v }))} />
+              </SettingRow>
+              <SettingRow label="Session lock" desc="Auto-lock wallet after 15 minutes of inactivity">
+                <Toggle checked={security.sessionLock} onChange={v => setSecurity(p => ({ ...p, sessionLock: v }))} />
+              </SettingRow>
+              <div
+                onClick={() => router.push("/agents/vault")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", cursor: "pointer" }}
+              >
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>Agent permissions</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>View vault allowlist, pause or revoke the agent</div>
+                </div>
+                <ChevronRight size={16} style={{ color: "var(--text-tertiary)" }} />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Session / disconnect */}
+        <Card className="panel" style={{ marginBottom: 20 }}>
           <SectionHead icon={<LogOut size={17} />} title="Session" />
-          <div style={{ paddingTop: 12 }}>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.6 }}>
-              Disconnecting clears your local session. Your wallet, vault, and on-chain assets remain intact — just sign in with Google again to restore access.
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, gap: 24 }}>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0, lineHeight: 1.6, flex: 1 }}>
+              Disconnecting clears your local session only. Your wallet, vault, and on-chain assets remain intact — sign in with Google again to restore access instantly.
             </p>
             <Button
               variant="danger"
               icon={<LogOut size={15} />}
               onClick={() => { logout(); router.push("/connect"); }}
             >
-              Disconnect wallet
+              Disconnect
             </Button>
           </div>
         </Card>

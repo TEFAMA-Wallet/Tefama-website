@@ -8,7 +8,32 @@ import Button from "@/components/ui/Button";
 import { usd } from "@/lib/data";
 import { useNotifications } from "@/hooks/useNotifications";
 
-const STRATEGIES = ["DCA", "Buy-the-dip", "Grid Trading", "Momentum"];
+const STRATEGIES: { id: string; label: string; desc: string; badge: string }[] = [
+  {
+    id: "DCA",
+    label: "Dollar-Cost Averaging",
+    desc: "Buy a fixed amount of DEEP on a regular schedule, regardless of price. Reduces timing risk by spreading purchases over time.",
+    badge: "Recommended",
+  },
+  {
+    id: "Buy-the-dip",
+    label: "Buy the Dip",
+    desc: "Only executes when DEEP drops 5%+ below its 24h high. Targets discounted entries — idles during uptrends.",
+    badge: "Popular",
+  },
+  {
+    id: "Grid Trading",
+    label: "Grid Trading",
+    desc: "Places a ladder of buy orders at preset price levels. Profits from price oscillation without predicting direction.",
+    badge: "Advanced",
+  },
+  {
+    id: "Momentum",
+    label: "Momentum",
+    desc: "Buys when price is trending upward (recent highs > prior highs). Rides breakouts — higher risk, higher reward.",
+    badge: "High risk",
+  },
+];
 const DURATIONS = ["6h", "12h", "24h", "3d", "7d", "30d"];
 
 const STEP_LABELS = ["Strategy", "Budget", "Parameters", "Review"];
@@ -24,7 +49,8 @@ export default function CreateAgentPage() {
   });
 
   const set = (k: string, v: string | number | boolean) => setForm((f) => ({ ...f, [k]: v }));
-  const risk = form.budget > 5 || form.strategy === "Grid Trading" ? "High" : form.budget > 2 ? "Medium" : "Low";
+  const strategyLabel = STRATEGIES.find(s => s.id === form.strategy)?.label ?? form.strategy;
+  const risk = form.budget > 5 || form.strategy === "Grid Trading" || form.strategy === "Momentum" ? "High" : form.budget > 2 ? "Medium" : "Low";
   const riskColor = risk === "High" ? "var(--ember-500)" : risk === "Medium" ? "var(--orange-400)" : "var(--orange-300)";
 
   const deploy = async () => {
@@ -55,7 +81,7 @@ export default function CreateAgentPage() {
             </p>
             <Card style={{ textAlign: "left", padding: "4px 18px", marginBottom: 24 }}>
               <div className="dl">
-                {[["Strategy", form.strategy], ["Budget", `${form.budget} SUI`], ["Duration", form.duration]].map(([k, v]) => (
+                {[["Strategy", strategyLabel], ["Budget", `${form.budget} SUI`], ["Duration", form.duration]].map(([k, v]) => (
                   <div key={k} className="r"><span className="k">{k}</span><span className="v">{v}</span></div>
                 ))}
               </div>
@@ -95,18 +121,33 @@ export default function CreateAgentPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Strategy</label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {STRATEGIES.map((s) => (
-                    <button key={s} onClick={() => set("strategy", s)} style={{
-                      padding: "14px 16px", borderRadius: 10, textAlign: "left",
-                      background: form.strategy === s ? "var(--brand-tint)" : "var(--ink-a04)",
-                      border: `1px solid ${form.strategy === s ? "var(--orange-400)" : "var(--border-subtle)"}`,
-                      color: form.strategy === s ? "var(--orange-400)" : "var(--text-primary)",
-                      fontWeight: 500, fontSize: 14,
-                    }}>
-                      {s}
-                    </button>
-                  ))}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {STRATEGIES.map((s) => {
+                    const active = form.strategy === s.id;
+                    return (
+                      <button key={s.id} onClick={() => set("strategy", s.id)} style={{
+                        padding: "16px 18px", borderRadius: 12, textAlign: "left",
+                        background: active ? "var(--brand-tint)" : "var(--ink-a04)",
+                        border: `1px solid ${active ? "var(--orange-400)" : "var(--border-subtle)"}`,
+                        cursor: "pointer", transition: "border-color 0.15s, background 0.15s",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: active ? "var(--orange-400)" : "var(--text-primary)" }}>
+                            {s.label}
+                          </span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 100,
+                            background: active ? "var(--orange-400)" : "var(--ink-a08)",
+                            color: active ? "#000" : "var(--text-tertiary)",
+                            textTransform: "uppercase", letterSpacing: "0.06em",
+                          }}>{s.badge}</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, lineHeight: 1.55 }}>
+                          {s.desc}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -153,7 +194,7 @@ export default function CreateAgentPage() {
               </div>
               <Card style={{ padding: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                  With <strong style={{ color: "var(--text-primary)" }}>{form.strategy}</strong>, the agent will execute trades automatically within your $<strong style={{ color: "var(--text-primary)" }}>{form.budget}</strong> budget over <strong style={{ color: "var(--text-primary)" }}>{form.duration}</strong>, never exceeding {form.slippage}% slippage per trade.
+                  With <strong style={{ color: "var(--text-primary)" }}>{strategyLabel}</strong>, the agent will execute trades automatically within your <strong style={{ color: "var(--text-primary)" }}>{form.budget} SUI</strong> budget over <strong style={{ color: "var(--text-primary)" }}>{form.duration}</strong>, never exceeding {form.slippage}% slippage per trade.
                 </p>
               </Card>
             </div>
@@ -166,7 +207,7 @@ export default function CreateAgentPage() {
                 <div className="dl">
                   {[
                     ["Name", form.name || "Unnamed agent"],
-                    ["Strategy", form.strategy],
+                    ["Strategy", strategyLabel],
                     ["Budget", `${form.budget} SUI`],
                     ["Duration", form.duration],
                     ["Max slippage", form.slippage + "%"],
