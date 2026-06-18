@@ -1,0 +1,2 @@
+contracts/sources/*.move linguist-detectable=true
+contracts/sources/*.move linguist-language=Move
