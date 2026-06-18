@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Bot, ChartLine, Activity, Wallet, Settings, CircleHelp, ExternalLink, LogOut, Copy, Check } from "lucide-react";
+import { LayoutDashboard, Bot, ChartLine, Activity, Wallet, Settings, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { AGENTS } from "@/lib/data";
 import { useZkLogin } from "@/context/ZkLoginContext";
@@ -54,11 +54,6 @@ export default function Sidebar() {
         {NAV_MAIN.map(item)}
         <div className="sb-section">Account</div>
         {NAV_WALLET.map(item)}
-        <Link href="/faq" className="sb-item">
-          <CircleHelp size={19} className="ico" />
-          <span>Help</span>
-          <ExternalLink size={14} style={{ marginLeft: "auto", color: "var(--text-disabled)" }} />
-        </Link>
       </nav>
       <div className="sb-wallet">
         <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={copy}>

@@ -1,19 +1,28 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Wallet, Bot, Repeat, CircleCheckBig, Plus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Wallet, Bot, Repeat, TrendingUp, Plus, ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
-import AreaChart from "@/components/charts/AreaChart";
-import Sparkline from "@/components/charts/Sparkline";
-import { AGENTS, TRANSACTIONS, PORTFOLIO_SERIES, usd, signedUsd, pct } from "@/lib/data";
+import { useZkLogin } from "@/context/ZkLoginContext";
+import { usePrice, useWallet, useTrades } from "@/hooks/useOnchain";
+import { usd, pct } from "@/lib/data";
 
-const SPARK = [40, 44, 38, 47, 51, 48, 55, 60, 58, 63, 67, 71, 69, 74, 78, 75, 80, 82, 79, 85];
+function Skeleton({ w = 80, h = 20 }: { w?: number | string; h?: number }) {
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: 6,
+      background: "var(--ink-a08)",
+      animation: "tefama-pulse 1.6s ease-in-out infinite",
+    }} />
+  );
+}
 
-function StatCard({ label, Icon, value, delta, deltaUp, sub, spark }: {
-  label: string; Icon: React.ElementType; value: string; delta?: string; deltaUp?: boolean; sub?: string; spark?: boolean;
+function StatCard({ label, Icon, value, delta, deltaUp, sub, loading }: {
+  label: string; Icon: React.ElementType; value: string;
+  delta?: string; deltaUp?: boolean; sub?: string; loading?: boolean;
 }) {
   return (
     <div className="stat panel">
@@ -21,18 +30,35 @@ function StatCard({ label, Icon, value, delta, deltaUp, sub, spark }: {
         <span className="s-lab">{label}</span>
         <span className="s-ico"><Icon size={18} /></span>
       </div>
-      <div className="s-val">{value}</div>
-      {delta && <div className={`s-delta ${deltaUp ? "delta-up" : "delta-dn"}`}>{delta}</div>}
-      {sub && <div className="txt-ter" style={{ fontSize: 12, marginTop: 8 }}>{sub}</div>}
-      {spark && <div style={{ marginTop: 12 }}><Sparkline data={SPARK} width={200} height={36} /></div>}
+      <div className="s-val">
+        {loading ? <Skeleton w={120} h={28} /> : value}
+      </div>
+      {delta && !loading && (
+        <div className={`s-delta ${deltaUp ? "delta-up" : "delta-dn"}`}>{delta}</div>
+      )}
+      {sub && !loading && (
+        <div className="txt-ter" style={{ fontSize: 12, marginTop: 8 }}>{sub}</div>
+      )}
     </div>
   );
 }
 
 export default function DashboardPage() {
-  const [tf, setTf] = useState("7d");
-  const active = AGENTS.filter((a) => a.status === "active");
-  const recent = TRANSACTIONS.slice(0, 6);
+  const { address, session } = useZkLogin();
+  const { price, change24h, isLoading: priceLoading } = usePrice();
+  const { suiBalance, usdcBalance, vault, isLoading: walletLoading } = useWallet(address);
+  const { trades, pnl, roi, count: tradeCount, isLoading: tradesLoading } = useTrades(
+    vault?.id,
+    price
+  );
+
+  const totalUsd = suiBalance * price + usdcBalance;
+  const recent   = trades.slice(0, 6);
+  const loading  = walletLoading || priceLoading;
+
+  const budgetUsedPct = vault
+    ? Math.min(100, ((vault.spent ?? 0) / (vault.budgetCap ?? 1)) * 100)
+    : 0;
 
   return (
     <>
@@ -45,83 +71,127 @@ export default function DashboardPage() {
         <div className="page-head">
           <div>
             <h1>Dashboard</h1>
-            <div className="sub">Welcome back — here&apos;s how your agents are doing.</div>
+            <div className="sub">
+              {session?.name ? `Welcome back, ${session.name.split(" ")[0]}` : "Welcome back"} — live data from Sui testnet.
+            </div>
           </div>
         </div>
 
         <div className="stat-grid rise">
-          <StatCard label="Portfolio value" Icon={Wallet} value={usd(45250, 0)} delta="+$2,450 · +5.7% (24h)" deltaUp spark />
-          <StatCard label="Active agents" Icon={Bot} value={String(active.length)} sub="5 profitable · 1 neutral · 1 negative" />
-          <StatCard label="Volume (24h)" Icon={Repeat} value={usd(125430, 0)} delta="+$15,200 vs yesterday" deltaUp />
-          <StatCard label="Success rate" Icon={CircleCheckBig} value="94.2%" sub="2,847 trades · 2,682 successful" />
+          <StatCard
+            label="Portfolio value"
+            Icon={Wallet}
+            value={usd(totalUsd, 2)}
+            delta={`SUI @ ${usd(price, 3)} · ${change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}% 24h`}
+            deltaUp={change24h >= 0}
+            loading={loading}
+          />
+          <StatCard
+            label="SUI balance"
+            Icon={TrendingUp}
+            value={`${suiBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} SUI`}
+            sub={`≈ ${usd(suiBalance * price, 2)}`}
+            loading={loading}
+          />
+          <StatCard
+            label="Total trades"
+            Icon={Repeat}
+            value={String(tradeCount)}
+            sub={tradesLoading ? undefined : tradeCount === 0 ? "No trades yet" : `Last: ${trades[0]?.time ?? "—"}`}
+            loading={tradesLoading}
+          />
+          <StatCard
+            label="P&L (unrealised)"
+            Icon={Bot}
+            value={`${pnl >= 0 ? "+" : ""}${usd(pnl, 4)}`}
+            delta={tradeCount > 0 ? `${roi >= 0 ? "+" : ""}${roi.toFixed(2)}% ROI · ${tradeCount} trades` : undefined}
+            deltaUp={pnl >= 0}
+            loading={tradesLoading}
+          />
         </div>
 
-        <Card className="panel" style={{ marginTop: 20 }}>
-          <div className="panel-head">
-            <h3>Portfolio performance</h3>
-            <div className="seg">
-              {["24h", "7d", "30d", "All"].map((t) => (
-                <button key={t} className={tf === t ? "on" : ""} onClick={() => setTf(t)}>{t}</button>
-              ))}
+        {/* Vault state */}
+        {vault && (
+          <Card className="panel" style={{ marginTop: 20 }}>
+            <div className="panel-head">
+              <h3>Vault · DCA agent</h3>
+              <Badge status={vault.paused ? "paused" : "active"} pulse={!vault.paused}>
+                {vault.paused ? "Paused" : "Running"}
+              </Badge>
             </div>
-          </div>
-          <AreaChart data={PORTFOLIO_SERIES} height={280} />
-          <div className="mini-row">
-            <div className="mini"><div className="l">Starting</div><div className="v">{usd(39800, 0)}</div></div>
-            <div className="mini"><div className="l">Current</div><div className="v txt-brand">{usd(45250, 0)}</div></div>
-            <div className="mini"><div className="l">Peak</div><div className="v">{usd(45610, 0)}</div></div>
-            <div className="mini"><div className="l">Change</div><div className="v delta-up">+{usd(5450, 0)}</div></div>
-          </div>
-        </Card>
+            <div style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text-tertiary)" }}>
+              <span>Budget used</span>
+              <span style={{ fontFamily: "var(--font-mono)" }}>{usd(vault.spent ?? 0, 4)} / {usd(vault.budgetCap ?? 0, 4)}</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 4, background: "var(--ink-a08)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${budgetUsedPct}%`, background: "var(--orange-500)", borderRadius: 4, transition: "width 0.4s" }} />
+            </div>
+          </Card>
+        )}
 
         <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20, marginTop: 20 }}>
+          {/* Live price card */}
           <Card className="panel">
             <div className="panel-head">
-              <h3>Active agents</h3>
-              <Link href="/agents"><Button variant="ghost" size="sm">View all</Button></Link>
+              <h3>SUI / USDC · DeepBook</h3>
+              <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+                live · testnet
+              </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {AGENTS.filter((a) => a.status === "active").slice(0, 4).map((a) => (
-                <Link key={a.id} href={`/agents/${a.id}`} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 12px", borderRadius: 10, background: "var(--ink-a04)", transition: "background 0.15s" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--brand-tint)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange-400)", flexShrink: 0 }}>
-                    <Bot size={18} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{a.strategy}</div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 600, color: a.pnl >= 0 ? "var(--orange-400)" : "var(--ember-500)" }}>
-                      {signedUsd(a.pnl)}
-                    </div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-tertiary)" }}>{pct(a.pnlPct)}</div>
-                  </div>
-                </Link>
-              ))}
+            {priceLoading ? (
+              <Skeleton w="100%" h={60} />
+            ) : (
+              <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, fontFamily: "var(--font-mono)", letterSpacing: "-0.03em" }}>
+                  {usd(price, 4)}
+                </span>
+                <span style={{ fontSize: 15, color: change24h >= 0 ? "var(--orange-400)" : "var(--ember-500)", fontFamily: "var(--font-mono)" }}>
+                  {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
+                </span>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 20, marginTop: 14, fontSize: 13, color: "var(--text-secondary)" }}>
+              <span>Source: <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>DeepBook indexer</span></span>
             </div>
           </Card>
 
+          {/* Recent trades */}
           <Card className="panel">
             <div className="panel-head">
               <h3>Recent trades</h3>
               <Link href="/activity"><Button variant="ghost" size="sm">View all</Button></Link>
             </div>
-            <div>
-              {recent.map((tx, i) => (
-                <div key={tx.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < recent.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-                  <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ink-a04)", display: "flex", alignItems: "center", justifyContent: "center", color: tx.type === "buy" ? "var(--orange-400)" : "var(--text-secondary)", flexShrink: 0 }}>
-                    {tx.type === "buy" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{tx.type === "buy" ? "Bought" : "Sold"} {tx.amount} {tx.asset}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{tx.time}</div>
+            {tradesLoading ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[1, 2, 3].map(i => <Skeleton key={i} w="100%" h={36} />)}
+              </div>
+            ) : recent.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text-tertiary)", fontSize: 14 }}>
+                No trades yet. Start your first agent to see live activity.
+              </div>
+            ) : (
+              <div>
+                {recent.map((tx: any, i: number) => (
+                  <div key={tx.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < recent.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+                    <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ink-a04)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange-400)", flexShrink: 0 }}>
+                      <ArrowDownLeft size={15} />
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>
+                        Bought {tx.baseReceived.toFixed(4)} SUI
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{tx.time}</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{usd(tx.quoteSpent, 4)}</div>
+                      <a href={tx.explorerUrl} target="_blank" rel="noreferrer" style={{ color: "var(--text-disabled)" }}>
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
                   </div>
-                  <Badge status={tx.status === "confirmed" ? "active" : "pending"}>
-                    {tx.status === "confirmed" ? "Confirmed" : "Pending"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </div>

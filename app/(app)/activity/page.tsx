@@ -1,16 +1,28 @@
 "use client";
-import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowDownLeft, ExternalLink, RefreshCw } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
-import { TRANSACTIONS, AGENTS, usd } from "@/lib/data";
+import { useZkLogin } from "@/context/ZkLoginContext";
+import { usePrice, useWallet, useTrades } from "@/hooks/useOnchain";
+import { usd } from "@/lib/data";
 
-const ALL_TXS = [...TRANSACTIONS, ...TRANSACTIONS.map((t, i) => ({ ...t, id: t.id + "_2", time: `${i + 6}h ago` }))];
+function Skeleton() {
+  return (
+    <tr>
+      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+        <td key={i}>
+          <div style={{ width: 60, height: 16, borderRadius: 4, background: "var(--ink-a08)", animation: "tefama-pulse 1.6s ease-in-out infinite" }} />
+        </td>
+      ))}
+    </tr>
+  );
+}
 
 export default function ActivityPage() {
-  const [filter, setFilter] = useState("All");
-  const agentNames = ["All", ...Array.from(new Set(TRANSACTIONS.map((t) => t.agent)))];
-  const filtered = filter === "All" ? ALL_TXS : ALL_TXS.filter((t) => t.agent === filter);
+  const { address } = useZkLogin();
+  const { price } = usePrice();
+  const { vault } = useWallet(address);
+  const { trades, pnl, roi, count, isLoading, refresh } = useTrades(vault?.id, price);
 
   return (
     <>
@@ -19,54 +31,79 @@ export default function ActivityPage() {
         <div className="page-head">
           <div>
             <h1>Activity log</h1>
-            <div className="sub">All on-chain executions across your agents.</div>
+            <div className="sub">All on-chain executions from your vault · Sui testnet</div>
           </div>
+          <button
+            onClick={() => refresh()}
+            style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+          >
+            <RefreshCw size={13} /> Refresh
+          </button>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          {agentNames.map((n) => (
-            <button key={n} onClick={() => setFilter(n)} style={{
-              padding: "6px 14px", borderRadius: 20,
-              background: filter === n ? "var(--brand-tint)" : "var(--ink-a06)",
-              border: `1px solid ${filter === n ? "var(--orange-a20)" : "var(--border-subtle)"}`,
-              color: filter === n ? "var(--orange-400)" : "var(--text-secondary)",
-              fontSize: 13, fontWeight: 500, cursor: "pointer",
-            }}>{n}</button>
-          ))}
-        </div>
+        {/* Summary */}
+        {count > 0 && (
+          <div style={{ display: "flex", gap: 20, marginBottom: 20, padding: "14px 20px", background: "var(--ink-a04)", borderRadius: 12, border: "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Total trades</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20 }}>{count}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>P&L</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: pnl >= 0 ? "var(--orange-400)" : "var(--ember-500)" }}>
+                {pnl >= 0 ? "+" : ""}{usd(pnl, 4)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>ROI</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: roi >= 0 ? "var(--orange-400)" : "var(--ember-500)" }}>
+                {roi >= 0 ? "+" : ""}{roi.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+        )}
 
         <Card className="panel">
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr>{["Type", "Asset", "Amount", "Value", "Agent", "Status", "Time", ""].map((h) => <th key={h}>{h}</th>)}</tr>
+                <tr>{["Type", "Asset", "Amount", "Spent", "Price", "Status", "Time", ""].map((h) => <th key={h}>{h}</th>)}</tr>
               </thead>
               <tbody>
-                {filtered.map((tx) => (
-                  <tr key={tx.id}>
-                    <td>
-                      <span className={`tag ${tx.type === "buy" ? "tag-buy" : "tag-sell"}`}>
-                        {tx.type === "buy" ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{tx.asset}</td>
-                    <td style={{ fontFamily: "var(--font-mono)" }}>{tx.amount}</td>
-                    <td style={{ fontFamily: "var(--font-mono)" }}>{usd(tx.usd)}</td>
-                    <td style={{ color: "var(--text-secondary)", fontSize: 13 }}>{tx.agent}</td>
-                    <td>
-                      <span className={`tag ${tx.status === "confirmed" ? "tag-ok" : tx.status === "pending" ? "tag-pending" : "tag-fail"}`}>
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td style={{ color: "var(--text-tertiary)", fontSize: 13 }}>{tx.time}</td>
-                    <td>
-                      <button style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 4 }}>
-                        <ExternalLink size={13} />
-                      </button>
+                {isLoading ? (
+                  [1, 2, 3, 4, 5].map(i => <Skeleton key={i} />)
+                ) : trades.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: "center", padding: "48px 0", color: "var(--text-tertiary)" }}>
+                      No on-chain trades found yet. Launch an agent to start trading.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  trades.map((tx: any) => (
+                    <tr key={tx.id}>
+                      <td>
+                        <span className="tag tag-buy">
+                          <ArrowDownLeft size={12} /> buy
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>SUI</td>
+                      <td style={{ fontFamily: "var(--font-mono)" }}>
+                        {tx.baseReceived.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                      </td>
+                      <td style={{ fontFamily: "var(--font-mono)" }}>{usd(tx.quoteSpent, 4)}</td>
+                      <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                        {usd(tx.price, 4)}
+                      </td>
+                      <td><span className="tag tag-ok">confirmed</span></td>
+                      <td style={{ color: "var(--text-tertiary)", fontSize: 13 }}>{tx.time}</td>
+                      <td>
+                        <a href={tx.explorerUrl} target="_blank" rel="noreferrer" style={{ color: "var(--text-disabled)", cursor: "pointer" }}>
+                          <ExternalLink size={13} />
+                        </a>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
