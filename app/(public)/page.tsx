@@ -53,7 +53,7 @@ function EcgLine() {
 import {
   ArrowRight, ChevronDown,
   Fingerprint, SlidersHorizontal, Rocket, Gauge,
-  Boxes, FileLock2, Smartphone,
+  Boxes, FileLock2,
 } from "lucide-react";
 import { FAQ_HOME } from "@/lib/data";
 
@@ -195,50 +195,41 @@ export default function HomePage() {
       {/* ======== MOBILE APP ======== */}
       <section className="section-sm">
         <div className="container">
-          <div className="band" style={{ background: "linear-gradient(135deg, var(--ink-a04) 0%, var(--brand-tint) 100%)", borderRadius: 24, padding: "48px 40px", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
-              <div>
-                <div className="kicker">Mobile app</div>
-                <h2 style={{ fontSize: 32, marginBottom: 16 }}>Your agent wallet, in your pocket</h2>
-                <p className="txt-sec" style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
-                  Monitor trades, check your vault balance, and control your DCA agent from anywhere. Same Google login, same vault — no seed phrase required.
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <a href="https://expo.dev/accounts/tevinprime66/projects/tefama-mobile/builds/d78ed8f7-5048-4145-9499-fdf56f993cd2" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#3DDC84", color: "#000", padding: "12px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1-2.18-2.18C4 12.29 4.98 11.32 6.18 11.32a2.18 2.18 0 0 1 0 4.36m11.64 0a2.18 2.18 0 0 1-2.18-2.18 2.18 2.18 0 0 1 2.18-2.18 2.18 2.18 0 0 1 0 4.36M6.5 9.33L4.96 6.62a.33.33 0 0 1 .12-.45.33.33 0 0 1 .45.12l1.56 2.75A9.34 9.34 0 0 1 12 8.1c1.35 0 2.63.29 3.79.8l1.56-2.75a.33.33 0 0 1 .57.33L16.38 9.3A9.39 9.39 0 0 1 20 16.5H4a9.39 9.39 0 0 1 3.62-7.17z"/></svg>
-                      Download APK · Android
-                    </div>
-                  </a>
-                  <a href="https://expo.dev/accounts/tevinprime66/projects/tefama-mobile/builds/8d5203bb-f5f7-4641-b403-72e72ed5fa9a" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "var(--ink-a08)", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "12px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                      Download · iOS Simulator
-                    </div>
-                  </a>
-                  <Link href="/mobile" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange-400)", fontSize: 13, fontWeight: 500, textDecoration: "none", marginTop: 4 }}>
-                    Learn more <ArrowRight size={14} />
-                  </Link>
-                </div>
-              </div>
+          <div className="band" style={{
+            background: "linear-gradient(135deg, var(--ink-a04) 0%, var(--brand-tint) 100%)",
+            borderRadius: 24, padding: "48px 40px",
+            border: "1px solid var(--border-subtle)",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            flexWrap: "wrap", gap: 32,
+          }}>
+            {/* Left: headline + description */}
+            <div style={{ flex: "1 1 300px", maxWidth: 420 }}>
+              <div className="kicker" style={{ marginBottom: 12 }}>Mobile app</div>
+              <h2 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 14 }}>
+                Your agent wallet,<br />in your pocket
+              </h2>
+              <p className="txt-sec" style={{ fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+                Monitor trades, check your vault balance, and control your DCA agent from anywhere. Same Google login, same vault — no seed phrase required.
+              </p>
+            </div>
 
-              {/* Phone mock grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-                {["Dashboard", "Wallet", "Activity", "Analytics", "Agent"].map((label, i) => (
-                  <div key={label} style={{
-                    background: "var(--surface-raised)", border: "1px solid var(--border-subtle)",
-                    borderRadius: 16, padding: "10px 8px",
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-                    gridColumn: i === 4 ? "2 / 3" : undefined,
-                  }}>
-                    <div style={{ width: 70, height: 120, borderRadius: 10, background: "var(--ink-a04)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                      <div style={{ width: 16, height: 3, borderRadius: 2, background: "var(--ink-a12)", marginBottom: 4 }} />
-                      <Smartphone size={20} style={{ color: "var(--orange-400)" }} />
-                    </div>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textAlign: "center" }}>{label}</div>
-                  </div>
-                ))}
-              </div>
+            {/* Right: download buttons + learn more */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, flexShrink: 0 }}>
+              <a href="https://expo.dev/accounts/tevinprime66/projects/tefama-mobile/builds/d78ed8f7-5048-4145-9499-fdf56f993cd2" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#3DDC84", color: "#000", padding: "13px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14, whiteSpace: "nowrap" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1-2.18-2.18C4 12.29 4.98 11.32 6.18 11.32a2.18 2.18 0 0 1 0 4.36m11.64 0a2.18 2.18 0 0 1-2.18-2.18 2.18 2.18 0 0 1 2.18-2.18 2.18 2.18 0 0 1 0 4.36M6.5 9.33L4.96 6.62a.33.33 0 0 1 .12-.45.33.33 0 0 1 .45.12l1.56 2.75A9.34 9.34 0 0 1 12 8.1c1.35 0 2.63.29 3.79.8l1.56-2.75a.33.33 0 0 1 .57.33L16.38 9.3A9.39 9.39 0 0 1 20 16.5H4a9.39 9.39 0 0 1 3.62-7.17z"/></svg>
+                  Download APK · Android
+                </div>
+              </a>
+              <a href="https://expo.dev/accounts/tevinprime66/projects/tefama-mobile/builds/8d5203bb-f5f7-4641-b403-72e72ed5fa9a" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--ink-a08)", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "13px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14, whiteSpace: "nowrap" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                  Download · iOS Simulator
+                </div>
+              </a>
+              <Link href="/mobile" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange-400)", fontSize: 13, fontWeight: 600, textDecoration: "none", paddingLeft: 4 }}>
+                Learn more <ArrowRight size={14} />
+              </Link>
             </div>
           </div>
         </div>
