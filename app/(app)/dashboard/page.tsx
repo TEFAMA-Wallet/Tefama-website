@@ -135,7 +135,7 @@ export default function DashboardPage() {
           {/* Live price card */}
           <Card className="panel">
             <div className="panel-head">
-              <h3>SUI / USDC · DeepBook</h3>
+              <h3>SUI / USD · DeepBook</h3>
               <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
                 live · testnet
               </span>

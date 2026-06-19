@@ -10,26 +10,56 @@ const FAQ_ALL = [
   {
     category: "Getting started",
     items: [
-      { q: "Is TEFAMA free to use?", a: "Yes — the core features are free forever. No credit card required. We offer a Pro plan for power users who want higher budgets, more agents, and advanced analytics." },
-      { q: "Does TEFAMA ever touch my private keys?", a: "Never. We use zkLogin, which means you sign in with Google and your keys stay on your device. TEFAMA receives a scoped delegation — it can trade within your limits, and nothing else." },
-      { q: "Do I need a wallet app?", a: "No. zkLogin lets you sign in with Google or Apple. TEFAMA creates a Sui wallet automatically and manages it for you — no seed phrases, no extensions." },
+      {
+        q: "Do I need a wallet, seed phrase, or browser extension?",
+        a: "No. TEFAMA uses Sui zkLogin — sign in with your Google account and a Sui wallet address is derived for you automatically via a zero-knowledge proof. No seed phrase, no extension, no separate wallet app.",
+      },
+      {
+        q: "Is TEFAMA free to use?",
+        a: "Yes. TEFAMA is free to use on Sui Testnet as part of the Sui Overflow hackathon. All tokens used are testnet tokens with no real monetary value.",
+      },
+      {
+        q: "What network does TEFAMA run on?",
+        a: "Sui Testnet. The app connects to Sui's testnet RPC, trades on the testnet DeepBook v3 pool, and all balances are testnet tokens. Mainnet is the next milestone after the hackathon.",
+      },
     ],
   },
   {
     category: "Agents & trading",
     items: [
-      { q: "What happens if an agent loses money?", a: "The agent can only spend its budget. If the budget runs out, the agent stops automatically. You can also revoke any agent at any time with a single tap." },
-      { q: "Can I run multiple agents at once?", a: "Yes. On the free plan you can run up to 3 agents simultaneously. Pro unlocks unlimited agents with higher per-agent budgets." },
-      { q: "Which protocols does TEFAMA support?", a: "We currently support Deepbook (native Sui order book) for spot trading. Cetus, Turbos, and more are coming soon." },
-      { q: "Can I create a custom strategy?", a: "Yes. In addition to the pre-built templates (Buy-the-dip, DCA, Grid trading), you can compose a custom strategy by setting your own parameters." },
+      {
+        q: "What does the agent actually do?",
+        a: "It runs a Dollar-Cost Averaging (DCA) strategy on DeepBook v3. Every hour it checks the DEEP/SUI price. If the price is within 5% of the 24-hour low, it places a real market buy order using the vault's SUI budget. Every trade is confirmed on-chain.",
+      },
+      {
+        q: "Which exchange does it trade on?",
+        a: "DeepBook v3 — the native central-limit order book built into Sui. Trades are real on-chain fills against the DEEP/SUI pool via a BalanceManager, not simulated swaps.",
+      },
+      {
+        q: "What strategies are available?",
+        a: "The app offers four strategy options: DCA, Buy-the-Dip, Grid Trading, and Momentum. The live on-chain execution currently runs the DCA strategy — buy DEEP when price is near the 24-hour low.",
+      },
+      {
+        q: "What happens if the budget runs out?",
+        a: "The agent checks the remaining vault budget before every trade. If the budget is exhausted, it skips the trade. The vault contract enforces this at the Move level — no overspend is possible.",
+      },
     ],
   },
   {
     category: "Security",
     items: [
-      { q: "How are budget limits enforced?", a: "Budget limits are encoded in a Move policy object on Sui. Every transaction is verified by the Sui VM against those limits — they cannot be exceeded, even if the agent is compromised." },
-      { q: "How do I revoke an agent?", a: "One click in the dashboard sends a single on-chain transaction that invalidates the agent's policy. The instant it confirms, the agent is stopped and remaining budget returns to your wallet." },
-      { q: "Is the activity log auditable?", a: "Yes. Every execution emits a Sui event — an immutable, timestamped record. Every row in the activity log links to Sui Explorer so you can verify it yourself." },
+      {
+        q: "How are budget limits enforced?",
+        a: "Budget caps are written into a Move smart contract (the vault) on Sui. The vault uses a hot-potato pattern — request_trade() issues a receipt that must be consumed by settle_trade() in the same transaction. The Sui VM rejects any transaction that would exceed the cap. TEFAMA's servers cannot override this.",
+      },
+      {
+        q: "How do I pause or revoke the agent?",
+        a: "From the Vault settings page, one click calls set_paused(true) on the vault contract — the agent checks this flag before every trade and stops immediately. Revoking calls remove_agent(), permanently removing the agent from the allowlist. Your vault balance remains in the contract under your ownership.",
+      },
+      {
+        q: "Is the activity log verifiable on-chain?",
+        a: "Yes. Every trade emits TradeSettled and Charged events on Sui — immutable and timestamped. Every row in the activity feed links directly to Sui Explorer so you can verify the exact transaction yourself.",
+      },
     ],
   },
 ];
@@ -84,11 +114,12 @@ export default function FAQPage() {
         <section className="section-sm">
           <div className="container">
             <div className="cta-band">
-              <h2>Still have questions?</h2>
-              <p>Our team is happy to help. Or just try it — it's free.</p>
-              <div className="hero-cta" style={{ gap: 12, flexWrap: "wrap" }}>
-                <a href="#"><Button variant="secondary">Contact support</Button></a>
-                <Link href="/connect"><Button variant="primary" icon={<Wallet size={18} />}>Start free</Button></Link>
+              <h2>Ready to try it?</h2>
+              <p>Sign in with Google and your agent is live in under a minute.</p>
+              <div className="hero-cta">
+                <Link href="/connect">
+                  <Button variant="primary" icon={<Wallet size={18} />}>Get started</Button>
+                </Link>
               </div>
             </div>
           </div>
