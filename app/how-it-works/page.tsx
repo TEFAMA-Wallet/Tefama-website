@@ -1,4 +1,3 @@
-"use client";
 import Link from "next/link";
 import { Fingerprint, Bot, FileLock2, Activity, Gauge, ShieldCheck, Boxes, ListChecks, OctagonX, Wallet } from "lucide-react";
 import Card from "@/components/ui/Card";
@@ -7,18 +6,54 @@ import PublicHeader from "@/components/layout/PublicHeader";
 import Footer from "@/components/layout/Footer";
 
 const STEPS = [
-  { Icon: Fingerprint, h: "Connect your wallet", b: "Sign in with Google or Apple via zkLogin. No passwords, no seed phrases, no wallet app needed." },
-  { Icon: Bot, h: "Create an agent", b: "Choose a template (Buy-the-dip, DCA, Grid trading) or build custom. Set budget, time window, and protocol scope." },
-  { Icon: FileLock2, h: "Deploy a Move policy", b: "TEFAMA deploys a Move policy object to Sui that encodes your agent's authority — budget, scope, and time." },
-  { Icon: Activity, h: "Agent trades autonomously", b: "The agent monitors the market and executes within its policy limits. No signatures required, ever." },
-  { Icon: Gauge, h: "Monitor & control", b: "Watch executions in real time, check portfolio metrics, and revoke any agent in a single transaction." },
+  {
+    Icon: Fingerprint,
+    h: "Sign in with Google",
+    b: "TEFAMA uses Sui zkLogin — your Google account is all you need. A Sui wallet address is derived automatically via a zero-knowledge proof. No seed phrase, no browser extension, no separate wallet app.",
+  },
+  {
+    Icon: Bot,
+    h: "Choose a strategy & budget",
+    b: "Pick from DCA, Buy-the-Dip, Grid Trading, or Momentum. Set your SUI budget and how long the agent should run. A risk score (Low / Medium / High) is shown before you deploy.",
+  },
+  {
+    Icon: FileLock2,
+    h: "Vault locks your rules on-chain",
+    b: "Your budget cap lives in a Move smart contract — the vault — on Sui. The agent is added to the vault allowlist and can only spend what the contract permits. The Sui VM enforces this; TEFAMA's servers cannot override it.",
+  },
+  {
+    Icon: Activity,
+    h: "Agent trades on DeepBook — every hour",
+    b: "The agent runs via Vercel cron every hour. It checks the DEEP/SUI price on DeepBook v3. If the price is within 5% of the 24-hour low, it places a real market order through a BalanceManager. No manual signature needed.",
+  },
+  {
+    Icon: Gauge,
+    h: "Monitor, pause, or revoke anytime",
+    b: "Your activity feed shows every on-chain trade — DEEP received, SUI spent, execution price — with a direct Sui Explorer link. Pause or fully revoke the agent from Vault settings at any time with one click.",
+  },
 ];
 
 const DEEP = [
-  { Icon: ShieldCheck, h: "How budget enforcement works", b: "Each agent is bound to a Move policy object that carries its budget. Every trade is checked against that ceiling by the Sui VM. If an agent with a $500 budget tries to execute a $600 trade, the transaction is rejected on-chain — the ceiling cannot be exceeded, even by a misbehaving agent." },
-  { Icon: Boxes, h: "Why Sui?", b: "Move was designed for asset safety, making whole classes of exploits impossible. Programmable transaction blocks let an agent compose multi-step trades atomically, Deepbook provides a native on-chain order book, and zkLogin removes the seed-phrase barrier entirely." },
-  { Icon: ListChecks, h: "Activity-log transparency", b: "Every execution emits a Sui event — an immutable, timestamped record. The in-app activity log mirrors what's on-chain, and every row links to Sui Explorer so you can verify it yourself." },
-  { Icon: OctagonX, h: "The revocation mechanism", b: "Revocation is a single on-chain transaction that invalidates the agent's policy object. The instant it confirms, the agent can no longer execute, and its remaining budget returns to your wallet." },
+  {
+    Icon: ShieldCheck,
+    h: "How budget enforcement works",
+    b: "The vault contract uses a hot-potato pattern: request_trade() issues a TradeReceipt that must be consumed by settle_trade() in the same programmable transaction block. The contract debits the budget atomically before the trade and reverts the whole PTB if the cap would be exceeded — making overspend impossible at the VM level.",
+  },
+  {
+    Icon: Boxes,
+    h: "Why Sui & Move?",
+    b: "Move's ownership model makes whole classes of exploits impossible. Programmable transaction blocks let the agent compose deposit → place order → withdraw → settle atomically. DeepBook v3 is a native central-limit order book — real fills, not simulated swaps. zkLogin removes the seed-phrase barrier so anyone can sign in with Google.",
+  },
+  {
+    Icon: ListChecks,
+    h: "Activity-log transparency",
+    b: "Every trade emits TradeSettled and Charged events on Sui — immutable, timestamped, and publicly verifiable. The in-app activity log reads these events directly and every row links to Sui Explorer so you can confirm the trade happened on-chain.",
+  },
+  {
+    Icon: OctagonX,
+    h: "Pause and revocation",
+    b: "Pausing calls set_paused(true) on the vault — a single on-chain transaction. The agent checks this flag before every trade and skips if paused. Revoking calls remove_agent(), permanently removing the agent from the allowlist. In both cases your vault balance stays in the contract under your ownership.",
+  },
 ];
 
 export default function HowItWorksPage() {
@@ -31,7 +66,7 @@ export default function HowItWorksPage() {
             <div className="section-head">
               <div className="kicker">How it works</div>
               <h2 style={{ fontSize: 44 }}>How TEFAMA works</h2>
-              <p>From wallet connection to autonomous trading in minutes.</p>
+              <p>From Google sign-in to autonomous on-chain trading in under a minute.</p>
             </div>
           </div>
         </section>
@@ -76,10 +111,10 @@ export default function HowItWorksPage() {
           <div className="container">
             <div className="cta-band">
               <h2>See it in action</h2>
-              <p>Connect your wallet and launch your first agent in 60 seconds.</p>
+              <p>Sign in with Google and your agent is live in under a minute.</p>
               <div className="hero-cta">
                 <Link href="/connect">
-                  <Button variant="primary" size="lg" icon={<Wallet size={20} />}>Start free</Button>
+                  <Button variant="primary" size="lg" icon={<Wallet size={20} />}>Get started</Button>
                 </Link>
               </div>
             </div>

@@ -79,16 +79,16 @@ function FaqAccordion({ items }: { items: typeof FAQ_HOME }) {
 }
 
 const HOME_STEPS = [
-  { Icon: Fingerprint,       h: "Sign in",           b: "Use Google. That's it." },
-  { Icon: SlidersHorizontal, h: "Set a budget",       b: "Pick an amount and a strategy." },
-  { Icon: Rocket,            h: "Go live",            b: "Your agent starts trading." },
-  { Icon: Gauge,             h: "Stay in control",    b: "Watch it. Stop it. Anytime." },
+  { Icon: Fingerprint,       h: "Sign in",           b: "Use Google. Your Sui wallet is created instantly via zkLogin." },
+  { Icon: SlidersHorizontal, h: "Set a budget",       b: "Pick a SUI amount, a strategy, and how long to run." },
+  { Icon: Rocket,            h: "Go live",            b: "The agent places real trades on DeepBook every hour within your cap." },
+  { Icon: Gauge,             h: "Stay in control",    b: "Watch every trade. Pause or revoke. Anytime." },
 ];
 
 const TRUST = [
-  { Icon: Boxes,      h: "Funds never leave you",  b: "Your money stays in your wallet the whole time." },
-  { Icon: Fingerprint,h: "No seed phrases",        b: "Just sign in with Google. Your keys stay on your device." },
-  { Icon: FileLock2,  h: "Limits are locked in",  b: "Budget and time rules live on-chain. Nothing can break them." },
+  { Icon: Boxes,      h: "You own the vault",      b: "Your SUI goes into a smart contract vault you control. The agent can only spend what you allow — it cannot touch anything outside its limit." },
+  { Icon: Fingerprint,h: "No seed phrases",        b: "Sign in with Google. A Sui wallet is derived for you via zkLogin. No extension, no 24-word phrase, no private key to manage." },
+  { Icon: FileLock2,  h: "Limits enforced on-chain", b: "Budget caps are written into a Move contract. The Sui VM rejects any trade that would exceed them — not our servers, the blockchain itself." },
 ];
 
 export default function HomePage() {
