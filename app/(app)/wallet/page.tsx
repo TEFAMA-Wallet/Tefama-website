@@ -21,7 +21,7 @@ function Skeleton({ w = 80, h = 20 }: { w?: number | string; h?: number }) {
 const TOKEN_META: Record<string, { logo: string; color: string }> = {
   SUI:  { logo: "https://assets.coingecko.com/coins/images/26375/small/sui-ocean-square.png", color: "#6FBCF0" },
   USDC: { logo: "https://assets.coingecko.com/coins/images/6319/small/usdc.png",             color: "#2775CA" },
-  DEEP: { logo: "https://assets.coingecko.com/coins/images/36161/small/DEEP.png",            color: "#FF8C00" },
+  DEEP: { logo: "https://coin-images.coingecko.com/coins/images/68257/small/deepbook_LOGO_200x200.jpg?1755202024", color: "#FF8C00" },
 };
 
 function TokenLogo({ sym }: { sym: string }) {
