@@ -57,7 +57,7 @@ export default function AgentDetailsPage() {
               </Badge>
             </div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Dollar-cost averaging · SUI/USDC · {count} trades
+              Dollar-cost averaging · SUI → DEEP · {count} trades
             </div>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function AgentDetailsPage() {
             <div className="dl">
               {[
                 ["Strategy", "DCA"],
-                ["Pair", "SUI / USDC"],
+                ["Pair", "SUI → DEEP"],
                 ["Network", "Sui Testnet"],
                 ["Status", status],
               ].map(([k, v]) => (

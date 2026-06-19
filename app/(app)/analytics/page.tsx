@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
               <h3>Live market</h3>
               <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>DeepBook testnet · updates every 20s</span>
             </div>
-            <MarketRow label="SUI / USDC"  value={usd(price, 4)}     change={change24h}    loading={priceLoading} />
+            <MarketRow label="SUI / USD"   value={usd(price, 4)}     change={change24h}    loading={priceLoading} />
             <MarketRow label="SUI 24h high" value={usd(high24h, 4)}                         loading={priceLoading} />
             <MarketRow label="SUI 24h low"  value={usd(low24h, 4)}                          loading={priceLoading} />
             <MarketRow label="DEEP / SUI"   value={(deepPrice / price).toFixed(5) + " SUI"} change={deepChange24h} loading={priceLoading} />
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
             {[
               { l: "Strategy",        v: "Dollar-cost averaging" },
               { l: "Pair",            v: "SUI → DEEP" },
-              { l: "Trade size",      v: "0.19 SUI per execution" },
+              { l: "Trade size",      v: "0.3 SUI per execution" },
               { l: "Budget cap",      v: isLoading ? null : budgetCap > 0 ? `${budgetCap.toFixed(4)} SUI / 24h` : "—" },
               { l: "SUI spent",       v: isLoading ? null : `${spent.toFixed(4)} SUI` },
               { l: "DEEP bought",     v: isLoading ? null : totalDeepAccumulated > 0 ? totalDeepAccumulated.toFixed(4) + " DEEP" : "—" },

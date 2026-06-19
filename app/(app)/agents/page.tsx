@@ -106,8 +106,8 @@ export default function AgentsPage() {
               {[
                 ["Type",       "Dollar-cost averaging"],
                 ["Pair",       "SUI → DEEP"],
-                ["Trade size", "0.19 SUI per execution"],
-                ["Schedule",   "Daily at 9:00 AM UTC"],
+                ["Trade size", "0.3 SUI per execution"],
+                ["Schedule",   "Hourly (Vercel cron)"],
                 ["Rule",       "Buy when price ≤ 24h low + 5%"],
                 ["Network",    "Sui Testnet"],
               ].map(([k, v]) => (
