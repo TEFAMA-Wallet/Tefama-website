@@ -4,11 +4,11 @@ import { Bell, Shield, Wallet, Copy, Check, ExternalLink, User, ChevronRight } f
 import Image from "next/image";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { useRouter } from "next/navigation";
 import { useZkLogin } from "@/context/ZkLoginContext";
 import { useWallet } from "@/hooks/useOnchain";
+import { useNotifications } from "@/hooks/useNotifications";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -65,15 +65,14 @@ export default function SettingsPage() {
   const router = useRouter();
   const { session, address } = useZkLogin();
   const { vault } = useWallet(address);
+  const { prefs, updatePrefs, clear: clearNotifs, notifs } = useNotifications();
 
   const email    = session?.email ?? "—";
   const name     = session?.name  ?? "—";
   const picture  = session?.picture;
   const shortAddr = address ? `${address.slice(0, 10)}…${address.slice(-8)}` : "—";
 
-  const [copied, setCopied]    = useState(false);
-  const [notifs, setNotifs]    = useState({ budgetWarning: true, tradeExec: true, weeklyReport: false });
-  const [security, setSecurity] = useState({ biometric: true, sessionLock: false });
+  const [copied, setCopied] = useState(false);
 
   const copy = () => {
     if (!address) return;
@@ -144,36 +143,54 @@ export default function SettingsPage() {
           <Card className="panel">
             <SectionHead icon={<Bell size={17} />} title="Notifications" />
             <div style={{ paddingTop: 4 }}>
-              <SettingRow label="Budget warnings" desc="Alert when agent hits 80% of its daily budget cap">
-                <Toggle checked={notifs.budgetWarning} onChange={v => setNotifs(p => ({ ...p, budgetWarning: v }))} />
+              <SettingRow label="Trade executions" desc="Show a notification after every DCA trade the agent completes">
+                <Toggle checked={prefs.tradeExec} onChange={v => updatePrefs({ tradeExec: v })} />
               </SettingRow>
-              <SettingRow label="Trade executions" desc="Notify after every DCA trade the agent completes">
-                <Toggle checked={notifs.tradeExec} onChange={v => setNotifs(p => ({ ...p, tradeExec: v }))} />
+              <SettingRow label="Budget warnings" desc="Alert when agent hits 80% or 100% of its daily budget cap">
+                <Toggle checked={prefs.budgetWarning} onChange={v => updatePrefs({ budgetWarning: v })} />
               </SettingRow>
-              <SettingRow label="Weekly report" desc="Sunday summary of P&L, trades, and vault health">
-                <Toggle checked={notifs.weeklyReport} onChange={v => setNotifs(p => ({ ...p, weeklyReport: v }))} />
-              </SettingRow>
+              <div style={{ paddingTop: 14 }}>
+                <button
+                  onClick={clearNotifs}
+                  disabled={notifs.length === 0}
+                  style={{
+                    fontSize: 13, fontWeight: 500, color: notifs.length === 0 ? "var(--text-disabled)" : "var(--ember-500)",
+                    background: "none", border: "none", cursor: notifs.length === 0 ? "default" : "pointer", padding: 0,
+                  }}
+                >
+                  Clear notification history {notifs.length > 0 && `(${notifs.length})`}
+                </button>
+              </div>
             </div>
           </Card>
 
           <Card className="panel">
             <SectionHead icon={<Shield size={17} />} title="Security" />
             <div style={{ paddingTop: 4 }}>
-              <SettingRow label="Biometric unlock" desc="Use Face ID or fingerprint when opening the app">
-                <Toggle checked={security.biometric} onChange={v => setSecurity(p => ({ ...p, biometric: v }))} />
-              </SettingRow>
-              <SettingRow label="Session lock" desc="Auto-lock wallet after 15 minutes of inactivity">
-                <Toggle checked={security.sessionLock} onChange={v => setSecurity(p => ({ ...p, sessionLock: v }))} />
-              </SettingRow>
               <div
                 onClick={() => router.push("/agents/vault")}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border-subtle)", cursor: "pointer" }}
               >
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500 }}>Agent permissions</div>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>View vault allowlist, pause or revoke the agent</div>
                 </div>
                 <ChevronRight size={16} style={{ color: "var(--text-tertiary)" }} />
+              </div>
+              <div
+                onClick={() => window.open(explorerUrl, "_blank")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border-subtle)", cursor: "pointer" }}
+              >
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>View on explorer</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>Verify your wallet and vault on Suiscan</div>
+                </div>
+                <ExternalLink size={14} style={{ color: "var(--text-tertiary)" }} />
+              </div>
+              <div style={{ paddingTop: 14 }}>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
+                  Your keys are derived from your Google session via zkLogin — no seed phrase is ever stored. Biometric and session-lock controls are available in the mobile app.
+                </div>
               </div>
             </div>
           </Card>

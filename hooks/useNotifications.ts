@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePrice, useWallet, useTrades } from "./useOnchain";
 import { useZkLogin } from "@/context/ZkLoginContext";
+import { loadNotifPrefs, saveNotifPrefs, type NotifPrefs } from "@/lib/notifPrefs";
 
 export type NotifType = "trade" | "budget_warning" | "budget_exhausted" | "agent_paused" | "agent_active" | "agent_triggered";
 
@@ -10,7 +11,7 @@ export interface Notification {
   type: NotifType;
   title: string;
   body: string;
-  time: number; // unix ms
+  time: number;
   read: boolean;
   link?: string;
 }
@@ -30,7 +31,7 @@ function save(notifs: Notification[]) {
 }
 
 function push(notifs: Notification[], next: Omit<Notification, "read">): Notification[] {
-  if (notifs.some(n => n.id === next.id)) return notifs; // deduplicate
+  if (notifs.some(n => n.id === next.id)) return notifs;
   return [{ ...next, read: false }, ...notifs].slice(0, MAX_NOTIFS);
 }
 
@@ -41,36 +42,37 @@ export function useNotifications() {
   const { trades }  = useTrades(vault?.id, deepPrice);
 
   const [notifs, setNotifs] = useState<Notification[]>([]);
+  const [prefs, setPrefs]   = useState<NotifPrefs>({ tradeExec: true, budgetWarning: true });
+
   const seenTrades    = useRef<Set<string>>(new Set());
-  const firstTradeSet = useRef(false); // true after first trades fetch — skip initial batch
+  const firstTradeSet = useRef(false);
   const lastPaused    = useRef<boolean | null>(null);
   const warned80      = useRef(false);
   const warned100     = useRef(false);
   const initialized   = useRef(false);
 
-  // Load from storage once on mount — also pre-seed seenTrades so existing
-  // trades don't fire as "new" on every page visit
+  // Load notifications + prefs from storage on mount
   useEffect(() => {
     const stored = load();
     setNotifs(stored);
     stored.forEach(n => {
       if (n.id.startsWith("trade-")) seenTrades.current.add(n.id.slice(6));
     });
+    setPrefs(loadNotifPrefs());
     initialized.current = true;
   }, []);
 
-  // Persist whenever notifs change (after init)
+  // Persist notifications whenever they change (after init)
   useEffect(() => {
     if (!initialized.current) return;
     save(notifs);
   }, [notifs]);
 
-  // Watch new trades — skip the first fetch (those are historical, not new events)
+  // Watch new trades
   useEffect(() => {
     if (!trades?.length) return;
 
     if (!firstTradeSet.current) {
-      // First load: mark all existing trades as seen without notifying
       trades.forEach((tx: any) => seenTrades.current.add(tx.id));
       firstTradeSet.current = true;
       return;
@@ -82,6 +84,8 @@ export function useNotifications() {
     trades.forEach((tx: any) => {
       if (seenTrades.current.has(tx.id)) return;
       seenTrades.current.add(tx.id);
+      // Respect user pref — always record agent_triggered but gate trade toasts
+      if (!prefs.tradeExec) return;
       changed = true;
       updated = push(updated, {
         id:    `trade-${tx.id}`,
@@ -97,7 +101,7 @@ export function useNotifications() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trades]);
 
-  // Watch vault state (budget warnings, pause)
+  // Watch vault state — budget warnings + pause/resume
   useEffect(() => {
     if (!vault) return;
     let updated = [...notifs];
@@ -105,33 +109,38 @@ export function useNotifications() {
 
     const pct = vault.budgetCap > 0 ? (vault.spent / vault.budgetCap) * 100 : 0;
 
-    if (pct >= 100 && !warned100.current) {
-      warned100.current = true;
-      changed = true;
-      updated = push(updated, {
-        id:    `budget-100-${Date.now()}`,
-        type:  "budget_exhausted",
-        title: "Daily budget exhausted",
-        body:  `Agent hit its ${vault.budgetCap.toFixed(2)} SUI cap. It will resume tomorrow.`,
-        time:  Date.now(),
-        link:  "/agents/vault",
-      });
-    } else if (pct >= 80 && pct < 100 && !warned80.current) {
-      warned80.current = true;
-      changed = true;
-      updated = push(updated, {
-        id:    `budget-80-${Date.now()}`,
-        type:  "budget_warning",
-        title: "Budget at 80%",
-        body:  `Agent has used ${vault.spent.toFixed(4)} of ${vault.budgetCap.toFixed(4)} SUI today.`,
-        time:  Date.now(),
-        link:  "/agents/vault",
-      });
-    } else if (pct < 80) {
-      warned80.current = false;
+    if (prefs.budgetWarning) {
+      if (pct >= 100 && !warned100.current) {
+        warned100.current = true;
+        changed = true;
+        updated = push(updated, {
+          id:    `budget-100-${Date.now()}`,
+          type:  "budget_exhausted",
+          title: "Daily budget exhausted",
+          body:  `Agent hit its ${vault.budgetCap.toFixed(2)} SUI cap. It will resume tomorrow.`,
+          time:  Date.now(),
+          link:  "/agents/vault",
+        });
+      } else if (pct >= 80 && pct < 100 && !warned80.current) {
+        warned80.current = true;
+        changed = true;
+        updated = push(updated, {
+          id:    `budget-80-${Date.now()}`,
+          type:  "budget_warning",
+          title: "Budget at 80%",
+          body:  `Agent has used ${vault.spent.toFixed(4)} of ${vault.budgetCap.toFixed(4)} SUI today.`,
+          time:  Date.now(),
+          link:  "/agents/vault",
+        });
+      }
+    }
+
+    if (pct < 80) {
+      warned80.current  = false;
       warned100.current = false;
     }
 
+    // Pause/resume — always notify regardless of prefs (it's a critical state change)
     const isPaused = vault.paused;
     if (lastPaused.current !== null && isPaused !== lastPaused.current) {
       changed = true;
@@ -150,7 +159,7 @@ export function useNotifications() {
 
     if (changed) setNotifs(updated);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vault]);
+  }, [vault, prefs.budgetWarning]);
 
   const markAllRead = useCallback(() => {
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
@@ -164,7 +173,6 @@ export function useNotifications() {
     setNotifs([]);
   }, []);
 
-  // Called from agents/new after deploy
   const addAgentTriggered = useCallback(() => {
     setNotifs(prev => push(prev, {
       id:    `agent-triggered-${Date.now()}`,
@@ -176,7 +184,16 @@ export function useNotifications() {
     }));
   }, []);
 
+  // Called from settings to update prefs — persists immediately
+  const updatePrefs = useCallback((next: Partial<NotifPrefs>) => {
+    setPrefs(prev => {
+      const updated = { ...prev, ...next };
+      saveNotifPrefs(updated);
+      return updated;
+    });
+  }, []);
+
   const unread = notifs.filter(n => !n.read).length;
 
-  return { notifs, unread, markAllRead, markRead, clear, addAgentTriggered };
+  return { notifs, unread, prefs, updatePrefs, markAllRead, markRead, clear, addAgentTriggered };
 }
