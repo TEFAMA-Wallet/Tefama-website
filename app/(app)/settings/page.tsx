@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Bell, Shield, Wallet, LogOut, Copy, Check, ExternalLink, User, ChevronRight } from "lucide-react";
+import { Bell, Shield, Wallet, Copy, Check, ExternalLink, User, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
@@ -63,7 +63,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { session, address, logout } = useZkLogin();
+  const { session, address } = useZkLogin();
   const { vault } = useWallet(address);
 
   const email    = session?.email ?? "—";
@@ -178,23 +178,6 @@ export default function SettingsPage() {
             </div>
           </Card>
         </div>
-
-        {/* Session / disconnect */}
-        <Card className="panel" style={{ marginBottom: 20 }}>
-          <SectionHead icon={<LogOut size={17} />} title="Session" />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, gap: 24 }}>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0, lineHeight: 1.6, flex: 1 }}>
-              Disconnecting clears your local session only. Your wallet, vault, and on-chain assets remain intact — sign in with Google again to restore access instantly.
-            </p>
-            <Button
-              variant="danger"
-              icon={<LogOut size={15} />}
-              onClick={() => { logout(); router.push("/connect"); }}
-            >
-              Disconnect
-            </Button>
-          </div>
-        </Card>
 
       </div>
     </>
