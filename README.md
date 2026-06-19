@@ -136,3 +136,11 @@ One-time setup scripts in `contracts/client/`:
 ## Live Demo
 
 Deployed on Vercel · Sui Testnet · DeepBook DEEP/SUI pool `0x48c95963…`
+
+## Mobile App
+
+The TEFAMA mobile companion app is available for Android and iOS:
+
+**[github.com/TEFAMA-Wallet/Tefama-mobile](https://github.com/TEFAMA-Wallet/Tefama-mobile)**
+
+Same Google zkLogin account — your vault and trades appear on both platforms instantly.

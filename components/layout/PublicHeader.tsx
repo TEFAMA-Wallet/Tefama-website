@@ -20,6 +20,7 @@ export default function PublicHeader() {
         <nav className="pub-nav">
           <Link href="/how-it-works" className={pathname === "/how-it-works" ? "active" : ""}>How it works</Link>
           <Link href="/features"     className={pathname === "/features"     ? "active" : ""}>Features</Link>
+          <Link href="/mobile"       className={pathname === "/mobile"       ? "active" : ""}>Mobile app</Link>
           <Link href="/faq"          className={pathname === "/faq"          ? "active" : ""}>FAQ</Link>
         </nav>
         <div className="topbar-spacer" />
@@ -40,6 +41,7 @@ export default function PublicHeader() {
         <nav className="mob-nav" onClick={close}>
           <Link href="/how-it-works" className={pathname === "/how-it-works" ? "mob-nav-link active" : "mob-nav-link"}>How it works</Link>
           <Link href="/features"     className={pathname === "/features"     ? "mob-nav-link active" : "mob-nav-link"}>Features</Link>
+          <Link href="/mobile"       className={pathname === "/mobile"       ? "mob-nav-link active" : "mob-nav-link"}>Mobile app</Link>
           <Link href="/faq"          className={pathname === "/faq"          ? "mob-nav-link active" : "mob-nav-link"}>FAQ</Link>
           <Link href="/connect" className="mob-nav-cta">
             <Button variant="primary" icon={<Wallet size={16} />}>Connect wallet</Button>

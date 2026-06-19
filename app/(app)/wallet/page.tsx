@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { Copy, Check } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import Card from "@/components/ui/Card";
@@ -14,6 +15,39 @@ function Skeleton({ w = 80, h = 20 }: { w?: number | string; h?: number }) {
       background: "var(--ink-a08)",
       animation: "tefama-pulse 1.6s ease-in-out infinite",
     }} />
+  );
+}
+
+const TOKEN_META: Record<string, { logo: string; color: string }> = {
+  SUI:  { logo: "https://assets.coingecko.com/coins/images/26375/small/sui-ocean-square.png", color: "#6FBCF0" },
+  USDC: { logo: "https://assets.coingecko.com/coins/images/6319/small/usdc.png",             color: "#2775CA" },
+  DEEP: { logo: "https://assets.coingecko.com/coins/images/36161/small/DEEP.png",            color: "#FF8C00" },
+};
+
+function TokenLogo({ sym }: { sym: string }) {
+  const meta = TOKEN_META[sym];
+  const [err, setErr] = useState(false);
+  if (!meta || err) {
+    return (
+      <div style={{
+        width: 36, height: 36, borderRadius: "50%",
+        background: meta?.color ?? "var(--ink-a08)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0,
+      }}>
+        {sym.slice(0, 2)}
+      </div>
+    );
+  }
+  return (
+    <Image
+      src={meta.logo}
+      alt={sym}
+      width={36}
+      height={36}
+      style={{ borderRadius: "50%", flexShrink: 0 }}
+      onError={() => setErr(true)}
+    />
   );
 }
 
@@ -39,9 +73,7 @@ export default function WalletPage() {
     setTimeout(() => setCopied(false), 1100);
   };
 
-  const shortAddr = address
-    ? `${address.slice(0, 8)}...${address.slice(-6)}`
-    : "—";
+  const shortAddr = address ? `${address.slice(0, 8)}...${address.slice(-6)}` : "—";
 
   return (
     <>
@@ -57,30 +89,17 @@ export default function WalletPage() {
         <Card variant="raised" style={{ padding: 28, marginBottom: 20 }} className="rise">
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 8 }}>
-                Total balance
-              </div>
-              {isLoading || priceLoading ? (
-                <Skeleton w={180} h={42} />
-              ) : (
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 8 }}>Total balance</div>
+              {isLoading || priceLoading ? <Skeleton w={180} h={42} /> : (
                 <>
-                  <div style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-0.03em", fontFamily: "var(--font-mono)" }}>
-                    {usd(totalUsd, 2)}
-                  </div>
-                  <div style={{ fontSize: 14, color: "var(--text-secondary)", fontFamily: "var(--font-mono)", marginTop: 4 }}>
-                    SUI @ {usd(price, 4)} · DEEP @ {usd(deepPrice, 4)} · DeepBook live
-                  </div>
+                  <div style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-0.03em", fontFamily: "var(--font-mono)" }}>{usd(totalUsd, 2)}</div>
+                  <div style={{ fontSize: 14, color: "var(--text-secondary)", fontFamily: "var(--font-mono)", marginTop: 4 }}>SUI @ {usd(price, 4)} · DEEP @ {usd(deepPrice, 4)} · DeepBook live</div>
                 </>
               )}
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>zkLogin · Google</div>
-              <button onClick={copy} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                background: "var(--ink-a06)", border: "1px solid var(--border-default)",
-                borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-                color: "var(--text-secondary)", fontSize: 12, fontFamily: "var(--font-mono)",
-              }}>
+              <button onClick={copy} style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--ink-a06)", border: "1px solid var(--border-default)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: "var(--text-secondary)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
                 {shortAddr}
                 {copied ? <Check size={12} style={{ color: "var(--orange-400)" }} /> : <Copy size={12} />}
               </button>
@@ -97,39 +116,33 @@ export default function WalletPage() {
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr>{["Token", "Balance", "Price", "Value", "Allocation"].map((h) => <th key={h}>{h}</th>)}</tr>
+                <tr>{["Token", "Balance", "Price", "Value", "Allocation"].map(h => <th key={h}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  [1, 2, 3].map(i => (
-                    <tr key={i}>
-                      {[1, 2, 3, 4, 5].map(j => (
-                        <td key={j}><Skeleton w={60} h={16} /></td>
-                      ))}
-                    </tr>
-                  ))
+                  [1,2,3].map(i => <tr key={i}>{[1,2,3,4,5].map(j => <td key={j}><Skeleton w={60} h={16} /></td>)}</tr>)
                 ) : (
-                  tokens.map((t) => {
-                    const alloc = totalNonZero > 0 ? Math.round((t.usd_ / totalNonZero) * 100) : 0;
+                  tokens.map(t => {
+                    const alloc = Math.round((t.usd_ / totalNonZero) * 100);
+                    const meta  = TOKEN_META[t.sym];
                     return (
                       <tr key={t.sym}>
                         <td>
-                          <div style={{ fontWeight: 600 }}>{t.sym}</div>
-                          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t.name}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <TokenLogo sym={t.sym} />
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{t.sym}</div>
+                              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t.name}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td style={{ fontFamily: "var(--font-mono)" }}>
-                          {t.balance.toLocaleString(undefined, { maximumFractionDigits: t.decimals })}
-                        </td>
-                        <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-                          {t.price ? usd(t.price, t.sym === "SUI" ? 4 : 2) : "—"}
-                        </td>
-                        <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                          {t.usd_ > 0 ? usd(t.usd_, 2) : "—"}
-                        </td>
+                        <td style={{ fontFamily: "var(--font-mono)" }}>{t.balance.toLocaleString(undefined, { maximumFractionDigits: t.decimals })}</td>
+                        <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{t.price ? usd(t.price, t.sym === "SUI" ? 4 : 2) : "—"}</td>
+                        <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{t.usd_ > 0 ? usd(t.usd_, 2) : "—"}</td>
                         <td>
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <div style={{ flex: 1, height: 6, background: "var(--ink-a08)", borderRadius: 3, overflow: "hidden", maxWidth: 100 }}>
-                              <div style={{ height: "100%", width: `${alloc}%`, background: "var(--orange-500)", borderRadius: 3 }} />
+                              <div style={{ height: "100%", width: `${alloc}%`, background: meta?.color ?? "var(--orange-500)", borderRadius: 3 }} />
                             </div>
                             <span style={{ fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{alloc}%</span>
                           </div>
