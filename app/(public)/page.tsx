@@ -137,9 +137,6 @@ export default function HomePage() {
                 Get started <ArrowRight size={18} />
               </button>
             </Link>
-            <Link href="/how-it-works">
-              <button className="glass-pill">How it works</button>
-            </Link>
           </div>
         </div>
       </section>
