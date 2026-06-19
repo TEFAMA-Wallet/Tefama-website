@@ -13,7 +13,7 @@ export const FAQ_HOME = [
   },
   {
     q: "What happens if I want to stop?",
-    a: "You can pause or fully revoke the agent at any time from the Vault settings page. Pausing stops new trades immediately. Revoking removes the agent from the vault allowlist permanently. Your SUI and DEEP remain in your wallet — TEFAMA never holds your funds.",
+    a: "You can pause or fully revoke the agent at any time from the Vault settings page. Pausing stops new trades immediately. Revoking removes the agent from the vault allowlist permanently. Your vault balance stays in the smart contract under your ownership — TEFAMA's servers have no access to it.",
   },
   {
     q: "Which exchange does TEFAMA trade on?",
